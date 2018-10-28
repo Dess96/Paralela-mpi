@@ -61,10 +61,12 @@ void print_histo(
 	float    min_meas      /* in */);
 
 int main(int argc, char* argv[]) {
-	int bin_count, bin, hilos;		  // cantidad de bins, bin actual, bin == rango
+	int bin_count, bin, block;		  // cantidad de bins, bin actual, bin == rango
 	float min_meas, max_meas; // valor inferior de datos, valor superior de datos
 	vector<float> bin_maxes;  // vector de m�ximos por bin
 	vector<int> bin_counts;   // vector para contar valores por bin
+	vector<int> local_int;
+	vector<int> total_int;
 	int data_count;			  // cantidad de datos
 	vector<float> data;		  // vector de datos
 	int mid; // id de cada proceso
@@ -83,13 +85,15 @@ int main(int argc, char* argv[]) {
 #  endif
 
 	/* ejecución del proceso principal */
-	if (argc != 5) usage(argv[0]);
+	if (mid == 0) {
+		if (argc != 5) usage(argv[0]);
+	}
 	obt_args(argv, bin_count, min_meas, max_meas, data_count);
-
 	/* Allocate arrays needed */
-
 	bin_maxes.resize(bin_count);
 	bin_counts.resize(bin_count);
+	local_int.resize(bin_count);
+	total_int.resize(bin_count);
 	data.resize(data_count);
 
 	/* Generate the data */
@@ -98,8 +102,8 @@ int main(int argc, char* argv[]) {
 	/* Create bins for storing counts */
 	gen_bins(min_meas, max_meas, bin_maxes, bin_counts, bin_count);
 
-
-	for (int i = 0; i < data_count; i++) {
+	block = data_count / cnt_proc;
+	for (int i = mid * block; i < mid*block + block - 1; i++) {
 		int bin = which_bin(data[i], bin_maxes, bin_count, min_meas);
 		bin_counts[bin]++;
 	}
@@ -110,10 +114,10 @@ int main(int argc, char* argv[]) {
 		cout << " " << bin_counts[i];
 	cout << endl;
 #  endif
-
-	/* Print the histogram */
 	cout << endl << endl;
-	print_histo(bin_maxes, bin_counts, bin_count, min_meas);
+	if (mid == 0) {
+		print_histo(bin_maxes, bin_counts, bin_count, min_meas);
+	}
 	/* finalización de la ejecución paralela */
 
 	if (mid == 0)
@@ -122,30 +126,12 @@ int main(int argc, char* argv[]) {
 
 	MPI_Finalize();
 	return 0;
-}  /* main */
+}  
 
-   /*---------------------------------------------------------------------
-   * REQ: N/A
-   * MOD: N/A
-   * EFE: despliega mensaje indicando cómo ejecutar el programa y pasarle parámetros de entrada.
-   * ENTRAN:
-   *		nombre_prog:  nombre del programa
-   * SALEN: N/A
-   */
 void usage(string prog_name /* in */) {
 	cerr << "usage: " << prog_name << "<bin_count> <min_meas> <max_meas> <data_count>\n" << endl;
-	//	exit(0);
 } 
 
-   /*---------------------------------------------------------------------
-   * REQ: N/A
-   * MOD: dato_salida
-   * EFE: obtiene los valores de los argumentos pasados por "línea de comandos".
-   * ENTRAN:
-   *		nombre_prog:  nombre del programa
-   * SALEN:
-   *		dato_salida: un dato de salida con un valor de argumento pasado por "línea de comandos".
-   */
 void obt_args(
 	char*    argv[]        /* in  */,
 
@@ -154,6 +140,7 @@ void obt_args(
 	float&   min_meas_p    /* out */,
 
 	float&   max_meas_p    /* out */,
+
 	int&     data_count_p) {
 
 	bin_count_p = strtol(argv[1], NULL, 10);
@@ -166,7 +153,7 @@ void obt_args(
 	cout << "min_meas = " << min_meas_p << "max_meas = " << max_meas_p << endl;
 	cout << "data_count = " << data_count_p << endl;
 #  endif
-}  /* obt_args */
+}  
 
 void gen_data(
 	float   min_meas    /* in  */,
@@ -184,7 +171,7 @@ void gen_data(
 		cout << " ", data[i]);
 		cout << endl;
 #  endif
-}  /* gen_data */
+}  
 
 void gen_bins(
 	float min_meas      /* in  */,
@@ -207,7 +194,7 @@ void gen_bins(
 		cout << " " << bin_maxes[i]);
 		cout << endl);
 #  endif
-}  /* gen_bins */
+}  
 
 int which_bin(
 	float    data         /* in */,
@@ -229,12 +216,10 @@ int which_bin(
 		else
 			return mid;
 	}
-
-	/* Whoops! */
 	cerr << "Data = " << data << " doesn't belong to a bin!" << endl;
 	cerr << "Quitting" << endl;
 	exit(-1);
-}  /* which_bin */
+}  
 
 void print_histo(
 	vector<float>    bin_maxes   /* in */,
@@ -251,4 +236,4 @@ void print_histo(
 			cout << "X";
 		cout << endl;
 	}
-}  /* print_histo */
+} 
