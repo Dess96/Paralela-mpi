@@ -56,7 +56,7 @@ int which_bin(
 
 void print_histo(
 	vector<float>    bin_maxes   /* in */,
-	vector<int>     bin_counts   /* in */,
+	int*     total   /* in */,
 	int      bin_count     /* in */,
 	float    min_meas      /* in */);
 
@@ -65,14 +65,11 @@ int main(int argc, char* argv[]) {
 	float min_meas, max_meas; // valor inferior de datos, valor superior de datos
 	vector<float> bin_maxes;  // vector de m�ximos por bin
 	vector<int> bin_counts;   // vector para contar valores por bin
-	vector<int> local_int;
-	vector<int> total_int;
 	int data_count;			  // cantidad de datos
 	vector<float> data;		  // vector de datos
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
-
 	/* Arrancar ambiente MPI */
 	MPI_Init(&argc, &argv);             		/* Arranca ambiente MPI */
 	MPI_Comm_rank(MPI_COMM_WORLD, &mid); 		/* El comunicador le da valor a id (rank del proceso) */
@@ -92,21 +89,23 @@ int main(int argc, char* argv[]) {
 	/* Allocate arrays needed */
 	bin_maxes.resize(bin_count);
 	bin_counts.resize(bin_count);
-	local_int.resize(bin_count);
-	total_int.resize(bin_count);
 	data.resize(data_count);
-
+	int* local = new int[bin_count];
+	int* total = new int[bin_count];
+	block = data_count / cnt_proc;
 	/* Generate the data */
 	gen_data(min_meas, max_meas, data, data_count);
 
 	/* Create bins for storing counts */
 	gen_bins(min_meas, max_meas, bin_maxes, bin_counts, bin_count);
 
-	block = data_count / cnt_proc;
 	for (int i = mid * block; i < mid*block + block - 1; i++) {
 		int bin = which_bin(data[i], bin_maxes, bin_count, min_meas);
 		bin_counts[bin]++;
+		local[bin] = bin_counts[bin];
 	}
+	MPI_Reduce(local, total, bin_count, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+	
 
 #  ifdef DEBUG
 	cout << "bin_counts = ";
@@ -114,9 +113,9 @@ int main(int argc, char* argv[]) {
 		cout << " " << bin_counts[i];
 	cout << endl;
 #  endif
-	cout << endl << endl;
 	if (mid == 0) {
-		print_histo(bin_maxes, bin_counts, bin_count, min_meas);
+		cout << endl << endl;
+		print_histo(bin_maxes, total, bin_count, min_meas);
 	}
 	/* finalización de la ejecución paralela */
 
@@ -126,11 +125,11 @@ int main(int argc, char* argv[]) {
 
 	MPI_Finalize();
 	return 0;
-}  
+}
 
 void usage(string prog_name /* in */) {
 	cerr << "usage: " << prog_name << "<bin_count> <min_meas> <max_meas> <data_count>\n" << endl;
-} 
+}
 
 void obt_args(
 	char*    argv[]        /* in  */,
@@ -153,7 +152,7 @@ void obt_args(
 	cout << "min_meas = " << min_meas_p << "max_meas = " << max_meas_p << endl;
 	cout << "data_count = " << data_count_p << endl;
 #  endif
-}  
+}
 
 void gen_data(
 	float   min_meas    /* in  */,
@@ -171,7 +170,7 @@ void gen_data(
 		cout << " ", data[i]);
 		cout << endl;
 #  endif
-}  
+}
 
 void gen_bins(
 	float min_meas      /* in  */,
@@ -194,7 +193,7 @@ void gen_bins(
 		cout << " " << bin_maxes[i]);
 		cout << endl);
 #  endif
-}  
+}
 
 int which_bin(
 	float    data         /* in */,
@@ -219,21 +218,20 @@ int which_bin(
 	cerr << "Data = " << data << " doesn't belong to a bin!" << endl;
 	cerr << "Quitting" << endl;
 	exit(-1);
-}  
+}
 
 void print_histo(
 	vector<float>    bin_maxes   /* in */,
-	vector<int>     bin_counts   /* in */,
+	int*    total   /* in */,
 	int      bin_count     /* in */,
 	float    min_meas      /* in */) {
 	float bin_max, bin_min;
-
 	for (int i = 0; i < bin_count; i++) {
 		bin_max = bin_maxes[i];
 		bin_min = (i == 0) ? min_meas : bin_maxes[i - 1];
 		printf("%.3f-%.3f:\t", bin_min, bin_max);
-		for (int j = 0; j < bin_counts[i]; j++)
+		for (int j = 0; j < total[i]; j++)
 			cout << "X";
 		cout << endl;
 	}
-} 
+}
