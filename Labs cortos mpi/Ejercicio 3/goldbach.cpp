@@ -28,7 +28,9 @@ void obt_args(
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
-	int num, sum, r1, r2, quan;
+	int num, sum, quan, block, odd, listSize;
+	int r2 = 0;
+	int r1 = 0;
 	bool isSum = false;
 	list<int> primes;
 	list<int>::iterator it;
@@ -45,36 +47,48 @@ int main(int argc, char* argv[]) {
 		cin.ignore();
 	MPI_Barrier(MPI_COMM_WORLD);
 #  endif
-
-	uso("Conjetura de Goldbach");
+	if (mid == 0) {
+		uso("Conjetura de Goldbach");
+	}
 	obt_args(argv, num);
+	block = num / cnt_proc;
+	odd = 3;
 	/* ejecución del proceso principal */
-	for (int i = 3; i < num; i += 2) {
+	for (int i = mid * block; i < (mid*block) + block - 1; i++) {
 		quan = 0;
-		for (int j = 1; j <= i; j++) {
-			if (i % j == 0) {
+		for (int j = 1; j <= odd; j++) {
+			if (odd % j == 0) {
 				quan++;
 			}
 			if (quan == 2) {
 				primes.push_back(j);
 			}
 		}
+		odd += 2;
 	}
+	listSize = primes.size();
 	it = primes.begin();
-	while (it != primes.end() && !isSum) {
+	for (int i = 0; i < listSize; ++i) {
 		it2 = it;
-		while (it2 != primes.end() && !isSum) {
-			sum = (*it) + (*it2);
-			if (sum == num) {
-				r1 = (*it);
-				r2 = (*it2);
-				isSum = true;
+		if (!isSum) {
+			for (int j = i; j < listSize; ++j) {
+				sum = (*it) + (*it2);
+				if (sum == num) {
+					r1 = (*it);
+					r2 = (*it2);
+					isSum = true;
+				}
+				++it2;
 			}
-			it2++;
 		}
-		it++;
+		else {
+			i = listSize;
+		}
+		++it;
 	}
-	cout << "Los numeros que componen " << num << " son " << r1 << " y " << r2 << endl;
+	if (mid == 0) {
+		cout << "Los numeros que componen " << num << " son " << r1 << " y " << r2 << endl;
+	}
 	/* finalización de la ejecución paralela */
 	if (mid == 0)
 		cin.ignore();
