@@ -28,7 +28,7 @@ void obt_args(
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
-	int num, sum, quan, block, odd, listSize;
+	int num, sum, quan, block, odd, listSize, half, prime, block2;
 	int r2 = 0;
 	int r1 = 0;
 	bool isSum = false;
@@ -51,24 +51,28 @@ int main(int argc, char* argv[]) {
 		uso("Conjetura de Goldbach");
 	}
 	obt_args(argv, num);
-	block = num / cnt_proc;
+	half = cnt_proc / 2;
+	block = num / half;
 	odd = 3;
 	/* ejecución del proceso principal */
 	for (int i = mid * block; i < (mid*block) + block - 1; i++) {
 		quan = 0;
-		for (int j = 1; j <= odd; j++) {
-			if (odd % j == 0) {
+		prime = 1;
+		for (int j = mid * block; j < (mid*block) + block - 1; j++) {
+			if (odd % prime == 0) {
 				quan++;
 			}
 			if (quan == 2) {
-				primes.push_back(j);
+				primes.push_back(prime);
 			}
+			prime++;
 		}
 		odd += 2;
 	}
 	listSize = primes.size();
 	it = primes.begin();
-	for (int i = 0; i < listSize; ++i) {
+	block2 = listSize / cnt_proc;
+	for (int i = mid * block2; i < (mid*block2) + block2 - 1; i++) {
 		it2 = it;
 		if (!isSum) {
 			for (int j = i; j < listSize; ++j) {
