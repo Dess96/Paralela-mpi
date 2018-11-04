@@ -28,13 +28,13 @@ void obt_args(
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
-	int num, quan, it, it2, it3, sum, block, diff;
-	int l = 0;
-	int ind = 1;
+	int num, quan, block, diff;
+	int ind = 0;
 	int r1 = 0;
 	int r2 = 0;
 	int r3 = 0;
-	bool isSum;
+	int send[3];
+	int rec[3];
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
 
 	/* Arrancar ambiente MPI */
@@ -67,8 +67,7 @@ int main(int argc, char* argv[]) {
 			ind++;
 		}
 	}
-	for (int i = mid * block; i < (mid*block) + block - 1; i++) { //Ciclo principal
-		isSum = false;
+	for (int i = mid * block; i < (mid*block) + block; i++) { //Ciclo principal
 		if (i > 5) {
 			if (i % 2 != 0) { //Los impares estan compuestos por tres primos
 				for (int j = 0; j < num; j++) {
@@ -83,9 +82,6 @@ int main(int argc, char* argv[]) {
 						}
 					}
 				}
-				if (mid == 0) {
-					cout << "El numero " << i << " se forma por los numeros primos " << r1 << ", " << r2 << " y " << r3 << endl;
-				}
 			}
 			else { //Los pares estan compuestos por dos primos
 				for (int j = 0; j < num; j++){
@@ -94,12 +90,13 @@ int main(int argc, char* argv[]) {
 						if (diff == primes[k]) {
 							r1 = primes[j];
 							r2 = diff;
+							r3 = 0;
 						}
 					}
 				}
-				if (mid == 0) {
-					cout << "El numero " << i << " se forma por los numeros primos " << r1 << " y " << r2 << endl;
-				}
+			}
+			if (mid == 0) {
+				cout << "El numero " << i << " se forma por los numeros primos " << r1 << ", " << r2 << " y " << r3 << endl;
 			}
 		}
 	}
