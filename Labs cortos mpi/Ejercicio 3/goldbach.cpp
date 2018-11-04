@@ -28,7 +28,8 @@ void obt_args(
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
-	int num, quan, it, it2, it3, sum, block;
+	int num, quan, it, it2, it3, sum, block, diff;
+	int l = 0;
 	int ind = 1;
 	int r1 = 0;
 	int r2 = 0;
@@ -47,12 +48,13 @@ int main(int argc, char* argv[]) {
 	MPI_Barrier(MPI_COMM_WORLD);
 #  endif
 
-	uso("Conjetura de Goldbach");
+	if (mid == 0) {
+		uso("Conjetura de Goldbach");
+	}
 	obt_args(argv, num);
 	int* primes = new int[num];
 	/* ejecución del proceso principal */
 	block = num / cnt_proc;
-	primes[0] = 1;
 	for (int i = mid * block; i < (mid*block) + block - 1; i++) { //Llenamos una lista con numeros primos
 		quan = 0;
 		for (int j = 1; j <= i; j++) {
@@ -65,49 +67,39 @@ int main(int argc, char* argv[]) {
 			ind++;
 		}
 	}
-	for (int i = 5; i < num; i++) { //Ciclo principal
-		isSum = false; //No hemos encontrado la suma
-		if (i % 2 != 0) { //Los impares estan compuestos por tres primos
-			it = 0;
-			while (it < i && !isSum) {
-				it2 = it;
-				while (it2 < i && !isSum) {
-					it3 = it2;
-					while (it3 < i && !isSum) {
-						sum = primes[it] + primes[it2] + primes[it3];
-						if (sum == i) {
-							r1 = primes[it];
-							r2 = primes[it2];
-							r3 = primes[it3];
-							isSum = true;
+	for (int i = mid * block; i < (mid*block) + block - 1; i++) { //Ciclo principal
+		isSum = false;
+		if (i > 5) {
+			if (i % 2 != 0) { //Los impares estan compuestos por tres primos
+				for (int j = 0; j < num; j++) {
+					for (int k = 0; k < num; k++) {
+						diff = i - (primes[j] + primes[k]);
+						for (int l = 0; primes[l] <= i / 2; l++) {
+							if (diff == primes[k]) {
+								r1 = primes[j];
+								r2 = primes[k];
+								r3 = diff;
+							}
 						}
-						it3++;
 					}
-					it2++;
 				}
-				it++;
+				if (mid == 0) {
+					cout << "El numero " << i << " se forma por los numeros primos " << r1 << ", " << r2 << " y " << r3 << endl;
+				}
 			}
-			if (mid == 0) {
-				cout << "El numero " << i << " se forma por los numeros primos " << r1 << ", " << r2 << " y " << r3 << endl;
-			}
-		}
-		else { //Los pares estan compuestos por dos primos
-			it = 0;
-			while (it < i && !isSum) {
-				it2 = it;
-				while (it2 < i && !isSum) {
-					sum = primes[it] + primes[it2];
-					if (sum == i) {
-						r1 = primes[it];
-						r2 = primes[it2];
-						isSum = true;
+			else { //Los pares estan compuestos por dos primos
+				for (int j = 0; j < num; j++){
+					diff = i - primes[j];
+					for (int k = 0; primes[k] <= i / 2; k++) {
+						if (diff == primes[k]) {
+							r1 = primes[j];
+							r2 = diff;
+						}
 					}
-					it2++;
 				}
-				it++;
-			}
-			if (mid == 0) {
-				cout << "El numero "  << i << " se forma por los numeros primos " << r1 << " y " << r2 << endl;
+				if (mid == 0) {
+					cout << "El numero " << i << " se forma por los numeros primos " << r1 << " y " << r2 << endl;
+				}
 			}
 		}
 	}
