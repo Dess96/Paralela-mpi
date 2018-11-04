@@ -28,7 +28,7 @@ void obt_args(
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
-	int num, quan, it, it2, it3, sum;
+	int num, quan, it, it2, it3, sum, block;
 	int ind = 1;
 	int r1 = 0;
 	int r2 = 0;
@@ -51,8 +51,9 @@ int main(int argc, char* argv[]) {
 	obt_args(argv, num);
 	int* primes = new int[num];
 	/* ejecución del proceso principal */
+	block = num / cnt_proc;
 	primes[0] = 1;
-	for (int i = 1; i < num; i++) { //Llenamos una lista con numeros primos
+	for (int i = mid * block; i < (mid*block) + block - 1; i++) { //Llenamos una lista con numeros primos
 		quan = 0;
 		for (int j = 1; j <= i; j++) {
 			if (i%j == 0) {
@@ -86,7 +87,9 @@ int main(int argc, char* argv[]) {
 				}
 				it++;
 			}
-			cout << "El numero " << i << " se forma por los numeros primos " << r1 << ", " << r2 << " y " << r3 << endl;
+			if (mid == 0) {
+				cout << "El numero " << i << " se forma por los numeros primos " << r1 << ", " << r2 << " y " << r3 << endl;
+			}
 		}
 		else { //Los pares estan compuestos por dos primos
 			it = 0;
@@ -103,7 +106,9 @@ int main(int argc, char* argv[]) {
 				}
 				it++;
 			}
-			cout << "El numero "  << i << " se forma por los numeros primos " << r1 << " y " << r2 << endl;
+			if (mid == 0) {
+				cout << "El numero "  << i << " se forma por los numeros primos " << r1 << " y " << r2 << endl;
+			}
 		}
 	}
 	/* finalización de la ejecución paralela */
