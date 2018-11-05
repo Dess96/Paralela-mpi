@@ -14,6 +14,7 @@
 
 #include <mpi.h> 
 #include <iostream>
+#include<math.h>
 #include<list>
 using namespace std;
 
@@ -30,14 +31,14 @@ int main(int argc, char* argv[]) {
 	int cnt_proc; // cantidad de procesos
 	int num, quan, block, diff;
 	int ind = 0;
+	int buff;
 	int r1 = 0;
 	int r2 = 0;
 	int r3 = 0;
-	int send[3];
-	int rec[3];
+	int r4 = 0;
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
 
-	/* Arrancar ambiente MPI */
+						   /* Arrancar ambiente MPI */
 	MPI_Init(&argc, &argv);             		/* Arranca ambiente MPI */
 	MPI_Comm_rank(MPI_COMM_WORLD, &mid); 		/* El comunicador le da valor a id (rank del proceso) */
 	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc);  /* El comunicador le da valor a p (número de procesos) */
@@ -53,9 +54,11 @@ int main(int argc, char* argv[]) {
 	}
 	obt_args(argv, num);
 	int* primes = new int[num];
+	int* send = new int[num * 4];
+	int* rec = new int[num * 4];
 	/* ejecución del proceso principal */
 	block = num / cnt_proc;
-	for (int i = mid * block; i < (mid*block) + block - 1; i++) { //Llenamos una lista con numeros primos
+	for (int i = mid * block; i < (mid*block) + block; i++) { //Llenamos una lista con numeros primos
 		quan = 0;
 		for (int j = 1; j <= i; j++) {
 			if (i%j == 0) {
@@ -67,37 +70,38 @@ int main(int argc, char* argv[]) {
 			ind++;
 		}
 	}
+
+	buff = 0;
 	for (int i = mid * block; i < (mid*block) + block; i++) { //Ciclo principal
 		if (i > 5) {
-			if (i % 2 != 0) { //Los impares estan compuestos por tres primos
-				for (int j = 0; j < num; j++) {
-					for (int k = 0; k < num; k++) {
-						diff = i - (primes[j] + primes[k]);
-						for (int l = 0; primes[l] <= i / 2; l++) {
-							if (diff == primes[k]) {
-								r1 = primes[j];
-								r2 = primes[k];
-								r3 = diff;
-							}
-						}
-					}
-				}
-			}
-			else { //Los pares estan compuestos por dos primos
-				for (int j = 0; j < num; j++){
-					diff = i - primes[j];
-					for (int k = 0; primes[k] <= i / 2; k++) {
+			for (int j = 0; j < num; j++) {
+				for (int k = 0; k < sqrt(num); k++) {
+					diff = i - (primes[j] + primes[k]);
+					for (int l = 0; primes[l] <= i / 2; l++) {
 						if (diff == primes[k]) {
-							r1 = primes[j];
-							r2 = diff;
-							r3 = 0;
+							r1 = i;
+							r2 = primes[j];
+							r3 = primes[k];
+							r4 = diff;
 						}
 					}
 				}
 			}
-			if (mid == 0) {
-				cout << "El numero " << i << " se forma por los numeros primos " << r1 << ", " << r2 << " y " << r3 << endl;
-			}
+			send[buff] = r1;
+			buff++;
+			send[buff] = r2;
+			buff++;
+			send[buff] = r3;
+			buff++;
+			send[buff] = r4;
+			buff++;
+		}
+	}
+	MPI_Gather(send, 20, MPI_INT, rec, num*4, MPI_INT, 0, MPI_COMM_WORLD);
+	
+	for (int i = 0; i < num * 4; i+=4) {
+		if (mid == 0) {
+			cout << "El numero " << rec[i] << " esta compuesto por " << rec[i + 1] << ", " << rec[i + 2] << " y " << rec[i + 3] << endl;
 		}
 	}
 	/* finalización de la ejecución paralela */
