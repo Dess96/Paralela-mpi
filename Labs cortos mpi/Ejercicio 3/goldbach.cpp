@@ -31,11 +31,10 @@ int main(int argc, char* argv[]) {
 	int cnt_proc; // cantidad de procesos
 	int num, quan, block, diff;
 	int ind = 0;
-	int buff;
+	int buff = 0;
 	int r1 = 0;
-	int r2 = 0;
-	int r3 = 0;
-	int r4 = 0;
+	int r2, r3, r4;
+	bool isSum;
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
 
 						   /* Arrancar ambiente MPI */
@@ -55,7 +54,7 @@ int main(int argc, char* argv[]) {
 	obt_args(argv, num);
 	int* primes = new int[num];
 	int* send = new int[num * 4];
-	int* rec = new int[num * 4];
+	int* rec = new int[cnt_proc*(num * 4)];
 	/* ejecución del proceso principal */
 	block = num / cnt_proc;
 	for (int i = mid * block; i < (mid*block) + block; i++) { //Llenamos una lista con numeros primos
@@ -71,37 +70,35 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	buff = 0;
-	for (int i = mid * block; i < (mid*block) + block; i++) { //Ciclo principal
+	for (int i = mid * block; i < (mid*block) + block; ++i) { //Ciclo principal
+		isSum = false;
 		if (i > 5) {
-			for (int j = 0; j < num; j++) {
-				for (int k = 0; k < sqrt(num); k++) {
+			for (int j = 0; j < num; ++j) {
+				for (int k = 0; k < sqrt(num); ++k) {
 					diff = i - (primes[j] + primes[k]);
-					for (int l = 0; primes[l] <= i / 2; l++) {
-						if (diff == primes[k]) {
-							r1 = i;
-							r2 = primes[j];
-							r3 = primes[k];
-							r4 = diff;
+					for (int l = 0; primes[l] <= i / 2; ++l) {
+						if (diff == primes[k] && !isSum) {
+							isSum = true;
+							send[buff] = i;
+							buff++;
+							send[buff] = primes[j];
+							buff++;
+							send[buff] = primes[k];
+							buff++;
+							send[buff] = diff;
+							buff++;
 						}
 					}
 				}
 			}
-			send[buff] = r1;
-			buff++;
-			send[buff] = r2;
-			buff++;
-			send[buff] = r3;
-			buff++;
-			send[buff] = r4;
-			buff++;
 		}
 	}
-	MPI_Gather(send, 20, MPI_INT, rec, num*4, MPI_INT, 0, MPI_COMM_WORLD);
-	
-	for (int i = 0; i < num * 4; i+=4) {
+	int k = 0;
+	MPI_Gather(send, num * 4, MPI_INT, rec, cnt_proc*num * 4, MPI_INT, 0, MPI_COMM_WORLD);
+
+	for (int i = 0; i < cnt_proc*num * 4; i += 4) {
 		if (mid == 0) {
-			cout << "El numero " << rec[i] << " esta compuesto por " << rec[i + 1] << ", " << rec[i + 2] << " y " << rec[i + 3] << endl;
+			cout << "El numero " << send[i] << " esta compuesto por " << send[i + 1] << ", " << send[i + 2] << " y " << send[i + 3] << endl;
 		}
 	}
 	/* finalización de la ejecución paralela */
