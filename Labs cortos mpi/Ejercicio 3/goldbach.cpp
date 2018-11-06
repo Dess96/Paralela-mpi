@@ -19,7 +19,7 @@
 #include<vector>
 using namespace std;
 
-//#define DEBUG
+#define DEBUG
 
 void uso(string nombre_prog);
 
@@ -54,9 +54,7 @@ int main(int argc, char* argv[]) {
 	obt_args(argv, num);
 
 	int* send;
-	send = (int*)malloc(num * sizeof(int));
-	int *rec = 0;
-//	int* rec = new int[cnt_proc*(num * 4)];
+	send = (int*)malloc(num * 4* sizeof(int));
 	block = num / cnt_proc;
 	primes.resize(num);
 	for (int i = 2; i < num; i++) { //Llenamos una lista con numeros primos
@@ -103,14 +101,15 @@ int main(int argc, char* argv[]) {
 	}
 
 	int l = 0;
-	int tam = cnt_proc * num;
+	int *rec = 0;
+	int tam = cnt_proc * num * 4;
 	if (mid == 0) {
 		rec = (int*)malloc(tam * sizeof(int));;
 	}
-	MPI_Gather(send, num, MPI_INT, rec, num, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Gather(send, num*4, MPI_INT, rec, num*4, MPI_INT, 0, MPI_COMM_WORLD);
 
 
-	for (int i = 0; i < cnt_proc*num * 4; i += 4) {
+	for (int i = 0; i < tam; i += 4) {
 		if (mid == 0) {
 			cout << "El numero " << rec[i] << " esta compuesto por " << rec[i + 1] << ", " << rec[i + 2] << " y " << rec[i + 3] << endl;
 		}
