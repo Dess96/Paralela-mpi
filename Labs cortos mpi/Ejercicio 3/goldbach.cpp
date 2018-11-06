@@ -19,7 +19,7 @@
 #include<vector>
 using namespace std;
 
-#define DEBUG
+//#define DEBUG
 
 void uso(string nombre_prog);
 
@@ -30,6 +30,9 @@ void obt_args(
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
+	int num, quan, block, diff;
+	int ind = 0;
+	bool isSum;
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
 	vector<int> primes;
 
@@ -45,15 +48,15 @@ int main(int argc, char* argv[]) {
 #  endif
 
 	/* ejecución del proceso principal */
-	int num, quan, block, diff;
-	int ind = 0;
-	bool isSum;
-	int r1, r2, r3;
 	if (mid == 0) {
 		uso("Conjetura de Goldbach");
 	}
 	obt_args(argv, num);
-	int* send = new int[num * 4];
+
+	int* send;
+	send = (int*)malloc(num * sizeof(int));
+	int *rec = 0;
+//	int* rec = new int[cnt_proc*(num * 4)];
 	block = num / cnt_proc;
 	primes.resize(num);
 	for (int i = 2; i < num; i++) { //Llenamos una lista con numeros primos
@@ -70,6 +73,7 @@ int main(int argc, char* argv[]) {
 	}
 	int buff = 0;
 	int j, k;
+
 	for (int i = mid * block; i < (mid*block) + block; ++i) { //Ciclo principal
 		isSum = false;
 		if (i > 5) {
@@ -99,8 +103,12 @@ int main(int argc, char* argv[]) {
 	}
 
 	int l = 0;
-/*	int* rec = new int[cnt_proc*(num * 4)];
-	MPI_Gather(send, num * 4, MPI_INT, rec, cnt_proc*num * 4, MPI_INT, 0, MPI_COMM_WORLD);
+	int tam = cnt_proc * num;
+	if (mid == 0) {
+		rec = (int*)malloc(tam * sizeof(int));;
+	}
+	MPI_Gather(send, num, MPI_INT, rec, num, MPI_INT, 0, MPI_COMM_WORLD);
+
 
 	for (int i = 0; i < cnt_proc*num * 4; i += 4) {
 		if (mid == 0) {
