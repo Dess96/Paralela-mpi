@@ -16,9 +16,10 @@
 #include <iostream>
 #include<math.h>
 #include<list>
+#include<vector>
 using namespace std;
 
-//#define DEBUG
+#define DEBUG
 
 void uso(string nombre_prog);
 
@@ -29,13 +30,8 @@ void obt_args(
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
-	int num, quan, block, diff;
-	int ind = 0;
-	int buff = 0;
-	int r1 = 0;
-	int r2, r3, r4;
-	bool isSum;
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
+	vector<int> primes;
 
 						   /* Arrancar ambiente MPI */
 	MPI_Init(&argc, &argv);             		/* Arranca ambiente MPI */
@@ -48,16 +44,19 @@ int main(int argc, char* argv[]) {
 	MPI_Barrier(MPI_COMM_WORLD);
 #  endif
 
+	/* ejecución del proceso principal */
+	int num, quan, block, diff;
+	int ind = 0;
+	bool isSum;
+	int r1, r2, r3;
 	if (mid == 0) {
 		uso("Conjetura de Goldbach");
 	}
 	obt_args(argv, num);
-	int* primes = new int[num];
 	int* send = new int[num * 4];
-	int* rec = new int[cnt_proc*(num * 4)];
-	/* ejecución del proceso principal */
 	block = num / cnt_proc;
-	for (int i = mid * block; i < (mid*block) + block; i++) { //Llenamos una lista con numeros primos
+	primes.resize(num);
+	for (int i = 2; i < num; i++) { //Llenamos una lista con numeros primos
 		quan = 0;
 		for (int j = 1; j <= i; j++) {
 			if (i%j == 0) {
@@ -69,36 +68,43 @@ int main(int argc, char* argv[]) {
 			ind++;
 		}
 	}
-
+	int buff = 0;
+	int j, k;
 	for (int i = mid * block; i < (mid*block) + block; ++i) { //Ciclo principal
 		isSum = false;
 		if (i > 5) {
-			for (int j = 0; j < num; ++j) {
-				for (int k = 0; k < sqrt(num); ++k) {
+			j = 0;
+			while(j < num/2 && !isSum) {
+				k = 0;
+				while(k < num/2 && !isSum){
 					diff = i - (primes[j] + primes[k]);
-					for (int l = 0; primes[l] <= i / 2; ++l) {
-						if (diff == primes[k] && !isSum) {
-							isSum = true;
-							send[buff] = i;
-							buff++;
-							send[buff] = primes[j];
-							buff++;
-							send[buff] = primes[k];
-							buff++;
-							send[buff] = diff;
-							buff++;
-						}
+					if (diff == primes[k] && !isSum) {
+						isSum = true;
+						send[buff] = i;
+						buff++;
+						send[buff] = primes[j];
+						buff++;
+						send[buff] = primes[k];
+						buff++;
+						send[buff] = diff;
+						buff++;
+					}
+					else {
+						k++;
 					}
 				}
+				j++;
 			}
 		}
 	}
-	int k = 0;
+
+	int l = 0;
+/*	int* rec = new int[cnt_proc*(num * 4)];
 	MPI_Gather(send, num * 4, MPI_INT, rec, cnt_proc*num * 4, MPI_INT, 0, MPI_COMM_WORLD);
 
 	for (int i = 0; i < cnt_proc*num * 4; i += 4) {
 		if (mid == 0) {
-			cout << "El numero " << send[i] << " esta compuesto por " << send[i + 1] << ", " << send[i + 2] << " y " << send[i + 3] << endl;
+			cout << "El numero " << rec[i] << " esta compuesto por " << rec[i + 1] << ", " << rec[i + 2] << " y " << rec[i + 3] << endl;
 		}
 	}
 	/* finalización de la ejecución paralela */
