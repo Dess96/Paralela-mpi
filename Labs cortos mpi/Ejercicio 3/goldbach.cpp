@@ -19,7 +19,7 @@
 #include<vector>
 using namespace std;
 
-#define DEBUG
+//#define DEBUG
 
 void uso(string nombre_prog);
 
@@ -54,8 +54,8 @@ int main(int argc, char* argv[]) {
 	obt_args(argv, num);
 
 	int* send;
-	send = (int*)malloc(num * 4 * sizeof(int));
 	block = num / cnt_proc;
+	send = (int*)malloc(block * 4 * sizeof(int));
 	primes.resize(num);
 	for (int i = 2; i < num; i++) { //Llenamos una lista con numeros primos
 		quan = 0;
@@ -103,11 +103,11 @@ int main(int argc, char* argv[]) {
 
 	int m = 0;
 	int *rec = 0;
-	int tam = cnt_proc * num * 4;
+	int tam = cnt_proc * block * 4;
 	if (mid == 0) {
 		rec = (int*)malloc(tam * sizeof(int));;
 	}
-	MPI_Gather(send, num* 4, MPI_INT, rec, num * 4, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Gather(send, block * 4, MPI_INT, rec, block * 4, MPI_INT, 0, MPI_COMM_WORLD);
 
 
 	for (int i = 0; i < tam; i += 4) {
