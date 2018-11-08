@@ -30,7 +30,7 @@ void obt_args(
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
-	int num, quan, block, diff;
+	int num, quan, block, diff, j, k, l;
 	int ind = 0;
 	bool isSum;
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
 	obt_args(argv, num);
 
 	int* send;
-	send = (int*)malloc(num * 4* sizeof(int));
+	send = (int*)malloc(num * 4 * sizeof(int));
 	block = num / cnt_proc;
 	primes.resize(num);
 	for (int i = 2; i < num; i++) { //Llenamos una lista con numeros primos
@@ -70,43 +70,44 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	int buff = 0;
-	int j, k;
 
 	for (int i = mid * block; i < (mid*block) + block; ++i) { //Ciclo principal
 		isSum = false;
 		if (i > 5) {
 			j = 0;
-			while(j < num/2 && !isSum) {
+			while(j < i/2 && !isSum) {
 				k = 0;
-				while(k < num/2 && !isSum){
+				while(k < i/2 && !isSum){
 					diff = i - (primes[j] + primes[k]);
-					if (diff == primes[k] && !isSum) {
-						isSum = true;
-						send[buff] = i;
-						buff++;
-						send[buff] = primes[j];
-						buff++;
-						send[buff] = primes[k];
-						buff++;
-						send[buff] = diff;
-						buff++;
+					l = 0;
+					while(l < i/2 && !isSum){
+						if (diff == primes[l] && !isSum) {
+							isSum = true;
+							send[buff] = i;
+							buff++;
+							send[buff] = primes[j];
+							buff++;
+							send[buff] = primes[k];
+							buff++;
+							send[buff] = diff;
+							buff++;
+						}
+						l++;
 					}
-					else {
-						k++;
-					}
+					k++;
 				}
 				j++;
 			}
 		}
 	}
 
-	int l = 0;
+	int m = 0;
 	int *rec = 0;
 	int tam = cnt_proc * num * 4;
 	if (mid == 0) {
 		rec = (int*)malloc(tam * sizeof(int));;
 	}
-	MPI_Gather(send, num*4, MPI_INT, rec, num*4, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Gather(send, num* 4, MPI_INT, rec, num * 4, MPI_INT, 0, MPI_COMM_WORLD);
 
 
 	for (int i = 0; i < tam; i += 4) {
