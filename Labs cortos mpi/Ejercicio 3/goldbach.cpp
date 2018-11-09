@@ -30,13 +30,15 @@ void obt_args(
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
-	int num, quan, block, diff, j, k, l;
+	int num, quan, block, j, k, l;
+	double local_start, local_finish, local_elapsed, elapsed;
+	int sum = 2;
 	int ind = 0;
 	bool isSum;
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
 	vector<int> primes;
 
-						   /* Arrancar ambiente MPI */
+	/* Arrancar ambiente MPI */
 	MPI_Init(&argc, &argv);             		/* Arranca ambiente MPI */
 	MPI_Comm_rank(MPI_COMM_WORLD, &mid); 		/* El comunicador le da valor a id (rank del proceso) */
 	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc);  /* El comunicador le da valor a p (número de procesos) */
@@ -51,6 +53,8 @@ int main(int argc, char* argv[]) {
 	if (mid == 0) {
 		uso("Conjetura de Goldbach");
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	local_start = MPI_Wtime();
 	obt_args(argv, num);
 
 	int* send;
@@ -70,34 +74,73 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	int buff = 0;
+	int it2, n2, it3, diff2;
+	bool isPrime;
+	int diff;
 
 	for (int i = mid * block; i < (mid*block) + block; ++i) { //Ciclo principal
 		isSum = false;
-		if (i > 5) {
-			j = 0;
-			while(j < i/2 && !isSum) {
-				k = 0;
-				while(k < i/2 && !isSum){
-					diff = i - (primes[j] + primes[k]);
-					l = 0;
-					while(l < i/2 && !isSum){
-						if (diff == primes[l] && !isSum) {
-							isSum = true;
+		if (i > 5) {	
+			diff = i - 2;
+			if (diff % 2 == 0) {
+				it2 = 0;
+				n2 = primes[it2];
+				isPrime = false;
+				while (n2 < diff && it2 < num && !isPrime) {
+					diff2 = diff - n2;
+					it3 = 0;
+					while (it3 < num && !isPrime) {
+						if (diff2 == primes[it3]) {
+							isPrime = true;
 							send[buff] = i;
 							buff++;
-							send[buff] = primes[j];
+							send[buff] = diff2;
 							buff++;
-							send[buff] = primes[k];
+							send[buff] = 2;
 							buff++;
-							send[buff] = diff;
+							send[buff] = n2;
 							buff++;
 						}
-						l++;
+						++it3;
 					}
-					k++;
+					if (!isPrime) {
+						it2++;
+						n2 = primes[it2];
+					}
 				}
-				j++;
 			}
+			else {
+				diff = i - 3;
+				it2 = 0;
+				n2 = primes[it2];
+				isPrime = false;
+				while (n2 < diff & it2 < num && !isPrime) {
+					diff2 = diff - n2;
+					it3 = 0;
+					while (it3 < num && !isPrime) {
+						if (diff2 == primes[it3]) {
+							isPrime = true;
+							send[buff] = i;
+							buff++;
+							send[buff] = diff2;
+							buff++;
+							send[buff] = 3;
+							buff++;
+							send[buff] = n2;
+							buff++;
+
+						}
+						else {
+							it3++;
+						}
+					}
+					if (!isPrime) {
+						it2++;
+						n2 = primes[it2];
+					}
+				}
+			}
+
 		}
 	}
 
@@ -109,6 +152,12 @@ int main(int argc, char* argv[]) {
 	}
 	MPI_Gather(send, block * 4, MPI_INT, rec, block * 4, MPI_INT, 0, MPI_COMM_WORLD);
 
+	local_finish = MPI_Wtime();
+	local_elapsed = local_finish - local_start;
+	MPI_Reduce(&local_elapsed, &elapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+/*	if (mid == 0)
+		cout << "Tiempo transcurrido = " << elapsed << endl;*/
 
 	for (int i = 0; i < tam; i += 4) {
 		if (mid == 0) {
