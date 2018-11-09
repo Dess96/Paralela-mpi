@@ -29,7 +29,9 @@ void leeAdyacencias(ifstream& ae, vector< vector< int > >& ma, int& cntVertices)
 
 int minDistance(int* dist, bool* sptSet, int cntVertices);
 
-void printSolution(int* dist, int n);
+void printSolution(int* dist, int n, int* parent);
+
+void printPath(int parent[], int j);
 
 void dijkstra(vector<vector<int>>, int src, int cntVertices);
 
@@ -123,27 +125,48 @@ int minDistance(int* dist, bool* sptSet, int cntVertices) {
 	return min_index;
 }
 
-void printSolution(int* dist, int n) {
-	printf("Vertex   Distance from Source\n");
-	for (int i = 0; i < n; i++)
-		printf("%d tt %d\n", i, dist[i]);
+void printSolution(int* dist, int n, int* parent) {
+	int src = 0;
+	printf("Vertex\t\t Distance\tPath");
+	for (int i = 1; i < n; i++) {
+		printf("\n%d -> %d \t\t %d\t\t%d ",
+			src, i, dist[i], src);
+		printPath(parent, i);
+	}
+}
+
+void printPath(int parent[], int j) {
+	if (parent[j] == -1) {
+		return;
+	}
+	printPath(parent, parent[j]);
+	printf("%d ", j);
 }
 
 void dijkstra(vector<vector<int>> matrizAdyacencias, int src, int cntVertices) {
+	int mid;
+	int ind = 0;
+	MPI_Comm_rank(MPI_COMM_WORLD, &mid); 		/* El comunicador le da valor a id (rank del proceso) */
 	int* dist = new int[cntVertices];    
+	int* parent = new int[cntVertices];
 	bool* sptSet = new bool[cntVertices]; 
-	for (int i = 0; i < cntVertices; i++)
+	for (int i = 0; i < cntVertices; i++) {
 		dist[i] = INT_MAX, sptSet[i] = false;
-
+		parent[0] = -1;
+	}
 	dist[src] = 0;
-
 	for (int count = 0; count < cntVertices - 1; count++) {
 		int u = minDistance(dist, sptSet, cntVertices);
 		sptSet[u] = true;
-		for (int v = 0; v < cntVertices; v++)
+		for (int v = 0; v < cntVertices; v++) {
 			if (!sptSet[v] && matrizAdyacencias[u][v] && dist[u] != INT_MAX
-				&& dist[u] + matrizAdyacencias[u][v] < dist[v])
+				&& dist[u] + matrizAdyacencias[u][v] < dist[v]) {
+				parent[v] = u;
 				dist[v] = dist[u] + matrizAdyacencias[u][v];
+			}
+		}
 	}
-	printSolution(dist, cntVertices);
+	if (mid == 0) {
+		printSolution(dist, cntVertices, parent);
+	}
 }
