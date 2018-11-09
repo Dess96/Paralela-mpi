@@ -23,20 +23,21 @@ using namespace std;
 
 void uso(string nombre_prog);
 
-void obt_args(
-	char*    argv[]        /* in  */,
-	int&     num  /* out */);
+void obt_args(char* argv[], int& num);
+
+void find(int diff, int num, int* send, int& buff, int i);
+
+vector<int> primes;
 
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
-	int num, quan, block, j, k, l;
-	double local_start, local_finish, local_elapsed, elapsed;
-	int sum = 2;
+	int it2, n2, it3, diff, diff2, num, quan, block;
+	int buff = 0;
 	int ind = 0;
-	bool isSum;
+	bool isPrime;
+	double local_start, local_finish, local_elapsed, elapsed;
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
-	vector<int> primes;
 
 	/* Arrancar ambiente MPI */
 	MPI_Init(&argc, &argv);             		/* Arranca ambiente MPI */
@@ -55,12 +56,16 @@ int main(int argc, char* argv[]) {
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 	local_start = MPI_Wtime();
-	obt_args(argv, num);
 
+	obt_args(argv, num);
+	int *rec = 0;
 	int* send;
+	int tam;
 	block = num / cnt_proc;
 	send = (int*)malloc(block * 4 * sizeof(int));
+    tam = cnt_proc * block * 4;
 	primes.resize(num);
+
 	for (int i = 2; i < num; i++) { //Llenamos una lista con numeros primos
 		quan = 0;
 		for (int j = 1; j <= i; j++) {
@@ -73,80 +78,20 @@ int main(int argc, char* argv[]) {
 			ind++;
 		}
 	}
-	int buff = 0;
-	int it2, n2, it3, diff2;
-	bool isPrime;
-	int diff;
 
 	for (int i = mid * block; i < (mid*block) + block; ++i) { //Ciclo principal
-		isSum = false;
 		if (i > 5) {	
 			diff = i - 2;
 			if (diff % 2 == 0) {
-				it2 = 0;
-				n2 = primes[it2];
-				isPrime = false;
-				while (n2 < diff && it2 < num && !isPrime) {
-					diff2 = diff - n2;
-					it3 = 0;
-					while (it3 < num && !isPrime) {
-						if (diff2 == primes[it3]) {
-							isPrime = true;
-							send[buff] = i;
-							buff++;
-							send[buff] = diff2;
-							buff++;
-							send[buff] = 2;
-							buff++;
-							send[buff] = n2;
-							buff++;
-						}
-						++it3;
-					}
-					if (!isPrime) {
-						it2++;
-						n2 = primes[it2];
-					}
-				}
+				find(diff, num, send, buff, i);
 			}
 			else {
 				diff = i - 3;
-				it2 = 0;
-				n2 = primes[it2];
-				isPrime = false;
-				while (n2 < diff & it2 < num && !isPrime) {
-					diff2 = diff - n2;
-					it3 = 0;
-					while (it3 < num && !isPrime) {
-						if (diff2 == primes[it3]) {
-							isPrime = true;
-							send[buff] = i;
-							buff++;
-							send[buff] = diff2;
-							buff++;
-							send[buff] = 3;
-							buff++;
-							send[buff] = n2;
-							buff++;
-
-						}
-						else {
-							it3++;
-						}
-					}
-					if (!isPrime) {
-						it2++;
-						n2 = primes[it2];
-					}
-				}
+				find(diff, num, send, buff, i);
 			}
-
 		}
 	}
 
-	int m = 0;
-	int *rec = 0;
-	int tam = cnt_proc * block * 4;
 	if (mid == 0) {
 		rec = (int*)malloc(tam * sizeof(int));;
 	}
@@ -171,38 +116,54 @@ int main(int argc, char* argv[]) {
 
 	MPI_Finalize();
 	return 0;
-}  /* main */
+}  
 
-   /*---------------------------------------------------------------------
-   * REQ: N/A
-   * MOD: N/A
-   * EFE: despliega mensaje indicando cómo ejecutar el programa y pasarle parámetros de entrada.
-   * ENTRAN:
-   *		nombre_prog:  nombre del programa
-   * SALEN: N/A
-   */
-void uso(string nombre_prog /* in */) {
+void uso(string nombre_prog) {
 	cerr << nombre_prog.c_str() << " secuencia de parametros de entrada" << endl;
 	cout << "Los parametros de entrada son la cantidad de hilos y el n al que le vamos a calcular el numero Goldbach" << endl;
 	cout << "La salida es la secuencia de numeros que componen la suma" << endl;
-}  /* uso */
+} 
 
-   /*---------------------------------------------------------------------
-   * REQ: N/A
-   * MOD: dato_salida
-   * EFE: obtiene los valores de los argumentos pasados por "línea de comandos".
-   * ENTRAN:
-   *		nombre_prog:  nombre del programa
-   * SALEN:
-   *		dato_salida: un dato de salida con un valor de argumento pasado por "línea de comandos".
-   */
 void obt_args(
-	char*    argv[]        /* in  */,
-	int&     num  /* out */) {
+	char*    argv[],
+	int&     num) {
 
 	num = strtol(argv[1], NULL, 10); // se obtiene valor del argumento 1 pasado por "línea de comandos".
 
 #  ifdef DEBUG
 	cout << "dato_salida = " << num << endl;
 #  endif
-}  /* obt_args */
+}  
+
+void find(int diff, int num, int* send, int& buff, int i) {
+	int it2 = 0;
+	int n2 = primes[it2];
+	int it3;
+	int diff2;
+	bool isPrime = false;
+	while ((n2 < diff) && (it2 < num) && !isPrime) {
+		diff2 = diff - n2;
+		it3 = 0;
+		while (it3 < num && !isPrime) {
+			if (diff2 == primes[it3]) {
+				isPrime = true;
+				send[buff] = i;
+				buff++;
+				send[buff] = diff2;
+				buff++;
+				send[buff] = 3;
+				buff++;
+				send[buff] = n2;
+				buff++;
+
+			}
+			else {
+				it3++;
+			}
+		}
+		if (!isPrime) {
+			it2++;
+			n2 = primes[it2];
+		}
+	}
+}
