@@ -2,25 +2,26 @@
 #include <iomanip>
 #include <iostream>
 #include <mpi.h> 
-#include <iostream>
 #include <vector>
+#include <fstream>
+
 using namespace std;
 
-# define NV 6
 #define i4_huge 2147483647
 
 typedef vector< vector< int > > T_vec_vec_int;
 typedef vector< int > T_vec_int;
+int cntVertices;
 
 void distancias_dijkstra(const T_vec_vec_int& ohd, T_vec_int& mind);
 void buscar_mas_cercano(int s, int e, const T_vec_int& mind, const vector< bool >& connected, int& d, int& v);
-void inicializar(T_vec_vec_int& ohd);
 void actualizar_mind(int s, int e, int mv, const vector< bool > connected, const T_vec_vec_int ohd, T_vec_int& mind);
+void leeAdyacencias(ifstream& ae, T_vec_vec_int& ohd, int& cntVertices, T_vec_int& mind);
 
 int main(int argc, char **argv) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
-	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
+	MPI_Status mpi_status; // para capturar estado al finalizar icntVerticesocación de funciones MPI
 
 	/* Arrancar ambiente MPI */
 	MPI_Init(&argc, &argv);             		/* Arranca ambiente MPI */
@@ -34,18 +35,26 @@ int main(int argc, char **argv) {
 #  endif
 
 	/* ejecución del proceso principal */
-	T_vec_int mind; 
-	mind.resize(NV, 0);
+	string nombreArchivoEntrada = "gpequenyo.txt"; // formato *.txt, por ejemplo "grafo.txt
+	ifstream archivoEntrada(nombreArchivoEntrada, ios::in);
+	T_vec_int mind;
 	T_vec_vec_int ohd;
-	ohd.resize(NV, mind); 
+
+	if (!archivoEntrada) { // operador ! sobrecargado
+		cout << "No se pudo abrir el archivo de entrada" << endl;
+		cin.ignore();
+		return 1;
+	}
+
 	cout << "INICIA DIJKSTRA_OPENMP" << endl;
 
 	// se inicializa la matriz de adyacencias:
-	inicializar(ohd);
+	leeAdyacencias(archivoEntrada, ohd, cntVertices, mind);
+
 
 	// se imprime la matriz de adyacencias:
-	for (int i = 0; i < NV; i++) {
-		for (int j = 0; j < NV; j++) {
+	for (int i = 0; i < cntVertices; i++) {
+		for (int j = 0; j < cntVertices; j++) {
 			if (ohd[i][j] == i4_huge)
 			{
 				cout << "  Inf";
@@ -61,7 +70,7 @@ int main(int argc, char **argv) {
 
 	// impresión de resultados:
 	cout << "  Distancias mínimas a partir del nodo 0:" << endl;
-	for (int i = 0; i < NV; i++)
+	for (int i = 0; i < cntVertices; i++)
 	{
 		cout << "  " << setw(2) << i
 			<< "  " << setw(2) << mind[i] << "\n";
@@ -90,24 +99,24 @@ void distancias_dijkstra(const T_vec_vec_int& ohd, T_vec_int& mind) {
 	int my_mv;
 	int nth; 
 
-	connected.resize(NV, false);
+	connected.resize(cntVertices, false);
 	connected[0] = true;
 
-	mind.resize(NV, 0);
-	for (int i = 0; i < NV; i++)
+	mind.resize(cntVertices, 0);
+	for (int i = 0; i < cntVertices; i++)
 	{
 		mind[i] = ohd[0][i];
 	}
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_id); 		/* El comunicador le da valor a id (rank del proceso) */
 	MPI_Comm_size(MPI_COMM_WORLD, &nth);  /* El comunicador le da valor a p (número de procesos) */
-	my_first = (my_id       * NV) / nth; // se calcula el límite inferior de las iteraciones que realizará cada hilo
-	my_last = ((my_id + 1) * NV) / nth - 1; // se calcula el límite superior de las iteraciones que realizará cada hilo
+	my_first = (my_id       * cntVertices) / nth; // se calcula el límite inferior de las iteraciones que realizará cada hilo
+	my_last = ((my_id + 1) * cntVertices) / nth - 1; // se calcula el límite superior de las iteraciones que realizará cada hilo
 	cout << endl;
 	cout << "  P" << my_id << ": La region paralela comienza con " << nth << " hilos." << endl;
 	cout << endl;
 	cout << "  P" << my_id << ":  Primero=" << my_first << "  Ultimo=" << my_last << endl;
 
-	for (int my_step = 1; my_step < NV; my_step++) {
+	for (int my_step = 1; my_step < cntVertices; my_step++) {
 		md = i4_huge;
 		mv = -1;
 		buscar_mas_cercano(my_first, my_last, mind, connected, my_md, my_mv);
@@ -140,32 +149,6 @@ void buscar_mas_cercano(int s, int e, const T_vec_int& mind, const vector< bool 
 	}
 }
 
-void inicializar(T_vec_vec_int& ohd) {
-	for (int i = 0; i < NV; i++)
-	{
-		for (int j = 0; j < NV; j++)
-		{
-			if (i == j)
-			{
-				ohd[i][i] = 0;
-			}
-			else
-			{
-				ohd[i][j] = i4_huge;
-			}
-		}
-	}
-
-	ohd[0][1] = ohd[1][0] = 40;
-	ohd[0][2] = ohd[2][0] = 15;
-	ohd[1][2] = ohd[2][1] = 20;
-	ohd[1][3] = ohd[3][1] = 10;
-	ohd[1][4] = ohd[4][1] = 25;
-	ohd[2][3] = ohd[3][2] = 100;
-	ohd[1][5] = ohd[5][1] = 6;
-	ohd[4][5] = ohd[5][4] = 8;
-}
-
 void actualizar_mind(int s, int e, int mv, const vector< bool > connected, const T_vec_vec_int ohd, T_vec_int& mind) {
 	for (int i = s; i <= e; i++) {
 		if (!connected[i]) {
@@ -174,6 +157,42 @@ void actualizar_mind(int s, int e, int mv, const vector< bool > connected, const
 					mind[i] = mind[mv] + ohd[mv][i];
 				}
 			}
+		}
+	}
+}
+
+void leeAdyacencias(ifstream& ae, T_vec_vec_int& ohd, int& cntVertices, T_vec_int& mind) {
+	int pe;
+	char finLinea = ' ';
+
+	ae >> cntVertices; // el primer número del archivo es la cantidad de vértices
+	mind.resize(cntVertices, 0);
+	ohd.resize(cntVertices, mind);
+
+	ae.get(); // consume un blanco
+	finLinea = ae.peek(); // intenta leer fin de línea
+
+	for (int i = 0; i < cntVertices; i++) {
+		for (int j = 0; j < cntVertices; j++) {
+			if (i == j) {
+				ohd[i][i] = 0;
+			}
+			else {
+				ohd[i][j] = i4_huge;
+			}
+		}
+	}
+	ae >> pe;
+	for (int i = 0; i < cntVertices; i++) {
+		for (int j = 0; j < cntVertices; j++) {
+			if (!ae.eof() && (finLinea != '\n')) { // 10 ascii de fin de línea
+				if (pe != -1) {
+					ohd[i][j] = pe;
+				}
+			}
+			ae >> pe;
+			ae.get(); // consume un blanco
+			finLinea = ae.peek(); // intenta leer fin de línea
 		}
 	}
 }
