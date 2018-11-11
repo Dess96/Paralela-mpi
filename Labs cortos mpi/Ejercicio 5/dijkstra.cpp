@@ -125,12 +125,16 @@ void distancias_dijkstra(const T_vec_vec_int& ohd, T_vec_int& mind) {
 			md = my_md;
 			mv = my_mv;
 		}
+		MPI_Barrier(MPI_COMM_WORLD); // para sincronizar la finalización de los procesos
+
 		if (mv != -1) {
 			connected[mv] = true;
 			if (my_id == 0) {
 				cout << "  P" << my_id << ": Conectando al nodo " << mv << endl;
 			}
 		}
+		MPI_Barrier(MPI_COMM_WORLD); // para sincronizar la finalización de los procesos
+
 		if (mv != -1) {
 			actualizar_mind(my_first, my_last, mv, connected, ohd, mind);
 		}
