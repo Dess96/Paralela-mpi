@@ -1,41 +1,23 @@
-/* Archivo:      mpi_plantilla.cpp
-* Propósito:   ....
-*
-* Compilación:   mpicxx -g -Wall -o mpi_plantilla mpi_plantilla.cpp
-* Ejecución:     mpiexec -n <num_proc> ./mpi_plantilla <secuencia de valores de parámetros>
-*
-* Entradas:     ...
-* Salidas:    ...
-*
-* Notas:
-* 1.  bandera DEBUG produce salida detallada para depuración.
-*
-*/
-
+#include <cstdlib>
+#include <iomanip>
+#include <iostream>
 #include <mpi.h> 
 #include <iostream>
-#include <stdio.h> 
-#include <limits.h> 
 #include <vector>
-#include <fstream>
-
 using namespace std;
 
-//#define DEBUG
+# define NV 6
+#define i4_huge 2147483647
 
-void uso(string nombre_prog);
+typedef vector< vector< int > > T_vec_vec_int;
+typedef vector< int > T_vec_int;
 
-void leeAdyacencias(ifstream& ae, vector< vector< int > >& ma, int& cntVertices);
+void distancias_dijkstra(const T_vec_vec_int& ohd, T_vec_int& mind);
+void buscar_mas_cercano(int s, int e, const T_vec_int& mind, const vector< bool >& connected, int& d, int& v);
+void inicializar(T_vec_vec_int& ohd);
+void actualizar_mind(int s, int e, int mv, const vector< bool > connected, const T_vec_vec_int ohd, T_vec_int& mind);
 
-int minDistance(int* dist, bool* sptSet, int cntVertices);
-
-void printSolution(int* dist, int n, int* parent);
-
-void printPath(int parent[], int j);
-
-void dijkstra(vector<vector<int>>, int src, int cntVertices);
-
-int main(int argc, char* argv[]) {
+int main(int argc, char **argv) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
@@ -52,23 +34,42 @@ int main(int argc, char* argv[]) {
 #  endif
 
 	/* ejecución del proceso principal */
-	string nombreArchivoEntrada = "gpequenyo.txt"; // formato *.txt, por ejemplo "grafo.txt
-	ifstream archivoEntrada(nombreArchivoEntrada, ios::in);
-	vector< vector< int > > matrizAdyacencias;
-	int cntVertices;
+	T_vec_int mind; 
+	mind.resize(NV, 0);
+	T_vec_vec_int ohd;
+	ohd.resize(NV, mind); 
+	cout << "INICIA DIJKSTRA_OPENMP" << endl;
 
-	if (mid == 0) {
-		uso("Dijkstra");
+	// se inicializa la matriz de adyacencias:
+	inicializar(ohd);
+
+	// se imprime la matriz de adyacencias:
+	for (int i = 0; i < NV; i++) {
+		for (int j = 0; j < NV; j++) {
+			if (ohd[i][j] == i4_huge)
+			{
+				cout << "  Inf";
+			}
+			else
+			{
+				cout << "  " << setw(3) << ohd[i][j];
+			}
+		}
+		cout << endl;
+	}
+	distancias_dijkstra(ohd, mind);
+
+	// impresión de resultados:
+	cout << "  Distancias mínimas a partir del nodo 0:" << endl;
+	for (int i = 0; i < NV; i++)
+	{
+		cout << "  " << setw(2) << i
+			<< "  " << setw(2) << mind[i] << "\n";
 	}
 
-	if (!archivoEntrada) { // operador ! sobrecargado
-		cout << "No se pudo abrir el archivo de entrada" << endl;
-		cin.ignore();
-		return 1;
-	}
-	leeAdyacencias(archivoEntrada, matrizAdyacencias, cntVertices);
-
-	dijkstra(matrizAdyacencias, 0, cntVertices);
+	// finalización:
+	cout << endl;
+	cout << "TERMINA DIJKSTRA_OPENMP" << endl;
 	/* finalización de la ejecución paralela */
 	if (mid == 0)
 		cin.ignore();
@@ -76,97 +77,103 @@ int main(int argc, char* argv[]) {
 
 	MPI_Finalize();
 	return 0;
-}  /* main */
+}
 
-void uso(string nombre_prog /* in */) {
-	cerr << nombre_prog.c_str() << " secuencia de parametros de entrada" << endl;
-	cout << "Los parametros de entrada son la cantidad de nodos del grafo y la matriz de adyacencias de tamaño NxN (del nodo 0 al nodo N-1)" << endl;
-	cout << "Las salidas del programa son las longitudes de los caminos mas cortos y la secuencia de nodos que los componen" << endl;
-}  /* uso */
+void distancias_dijkstra(const T_vec_vec_int& ohd, T_vec_int& mind) {
+	vector< bool > connected;
+	int md;  
+	int mv;  
+	int my_first; 
+	int my_id; 
+	int my_last; 
+	int my_md;
+	int my_mv;
+	int nth; 
 
-void leeAdyacencias(ifstream& ae, vector< vector< int > >& ma, int& cntVertices) {
-	int pe;
-	char finLinea = ' ';
+	connected.resize(NV, false);
+	connected[0] = true;
 
-	ae >> cntVertices; // el primer número del archivo es la cantidad de vértices
-	vector< int > v;
-	v.resize(cntVertices, INT_MAX);
-	ma.resize(cntVertices, v);
+	mind.resize(NV, 0);
+	for (int i = 0; i < NV; i++)
+	{
+		mind[i] = ohd[0][i];
+	}
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_id); 		/* El comunicador le da valor a id (rank del proceso) */
+	MPI_Comm_size(MPI_COMM_WORLD, &nth);  /* El comunicador le da valor a p (número de procesos) */
+	my_first = (my_id       * NV) / nth; // se calcula el límite inferior de las iteraciones que realizará cada hilo
+	my_last = ((my_id + 1) * NV) / nth - 1; // se calcula el límite superior de las iteraciones que realizará cada hilo
+	cout << endl;
+	cout << "  P" << my_id << ": La region paralela comienza con " << nth << " hilos." << endl;
+	cout << endl;
+	cout << "  P" << my_id << ":  Primero=" << my_first << "  Ultimo=" << my_last << endl;
 
-	ae.get(); // consume un blanco
-	finLinea = ae.peek(); // intenta leer fin de línea
+	for (int my_step = 1; my_step < NV; my_step++) {
+		md = i4_huge;
+		mv = -1;
+		buscar_mas_cercano(my_first, my_last, mind, connected, my_md, my_mv);
+		if (my_md < md)	{
+			md = my_md;
+			mv = my_mv;
+		}
+		if (mv != -1) {
+			connected[mv] = true;
+			cout << "  P" << my_id << ": Conectando al nodo " << mv << endl;
+		}
+		if (mv != -1) {
+			actualizar_mind(my_first, my_last, mv, connected, ohd, mind);
+		}
+	}
+	cout << endl;
+	cout << "  P" << my_id << ": Saliendo de la region paralela" << endl;
+}
 
-	for (int i = 0; i < cntVertices; i++) {
-		ma[i][i] = 0;
+void buscar_mas_cercano(int s, int e, const T_vec_int& mind, const vector< bool >& connected, int& d, int& v) {
+	d = i4_huge;
+	v = -1;
+	for (int i = s; i <= e; i++)
+	{
+		if (!connected[i] && mind[i] < d)
+		{
+			d = mind[i];
+			v = i;
+		}
+	}
+}
+
+void inicializar(T_vec_vec_int& ohd) {
+	for (int i = 0; i < NV; i++)
+	{
+		for (int j = 0; j < NV; j++)
+		{
+			if (i == j)
+			{
+				ohd[i][i] = 0;
+			}
+			else
+			{
+				ohd[i][j] = i4_huge;
+			}
+		}
 	}
 
-	ae >> pe;
-	for (int i = 0; i < cntVertices; i++) {
-		for (int j = 0; j < cntVertices; j++) {
-			if (!ae.eof() && (finLinea != '\n')) { // 10 ascii de fin de línea
-				if (pe != -1) {
-					ma[i][j] = pe;
+	ohd[0][1] = ohd[1][0] = 40;
+	ohd[0][2] = ohd[2][0] = 15;
+	ohd[1][2] = ohd[2][1] = 20;
+	ohd[1][3] = ohd[3][1] = 10;
+	ohd[1][4] = ohd[4][1] = 25;
+	ohd[2][3] = ohd[3][2] = 100;
+	ohd[1][5] = ohd[5][1] = 6;
+	ohd[4][5] = ohd[5][4] = 8;
+}
+
+void actualizar_mind(int s, int e, int mv, const vector< bool > connected, const T_vec_vec_int ohd, T_vec_int& mind) {
+	for (int i = s; i <= e; i++) {
+		if (!connected[i]) {
+			if (ohd[mv][i] < i4_huge) {
+				if (mind[mv] + ohd[mv][i] < mind[i]) {
+					mind[i] = mind[mv] + ohd[mv][i];
 				}
 			}
-			ae >> pe;
-			ae.get(); // consume un blanco
-			finLinea = ae.peek(); // intenta leer fin de línea
-		}	
-	}
-}
-
-int minDistance(int* dist, bool* sptSet, int cntVertices) {
-	int min = INT_MAX, min_index;
-	for (int v = 0; v < cntVertices; v++) {
-		if (sptSet[v] == false && dist[v] <= min) {
-			min = dist[v], min_index = v;
 		}
-	}
-	return min_index;
-}
-
-void printSolution(int* dist, int n, int* parent) {
-	int src = 0;
-	printf("Vertex\t\t Distance\tPath");
-	for (int i = 1; i < n; i++) {
-		printf("\n%d -> %d \t\t %d\t\t%d ",
-			src, i, dist[i], src);
-		printPath(parent, i);
-	}
-}
-
-void printPath(int parent[], int j) {
-	if (parent[j] == -1) {
-		return;
-	}
-	printPath(parent, parent[j]);
-	printf("%d ", j);
-}
-
-void dijkstra(vector<vector<int>> matrizAdyacencias, int src, int cntVertices) {
-	int mid;
-	int ind = 0;
-	MPI_Comm_rank(MPI_COMM_WORLD, &mid); 		/* El comunicador le da valor a id (rank del proceso) */
-	int* dist = new int[cntVertices];    
-	int* parent = new int[cntVertices];
-	bool* sptSet = new bool[cntVertices]; 
-	for (int i = 0; i < cntVertices; i++) {
-		dist[i] = INT_MAX, sptSet[i] = false;
-		parent[0] = -1;
-	}
-	dist[src] = 0;
-	for (int count = 0; count < cntVertices - 1; count++) {
-		int u = minDistance(dist, sptSet, cntVertices);
-		sptSet[u] = true;
-		for (int v = 0; v < cntVertices; v++) {
-			if (!sptSet[v] && matrizAdyacencias[u][v] && dist[u] != INT_MAX
-				&& dist[u] + matrizAdyacencias[u][v] < dist[v]) {
-				parent[v] = u;
-				dist[v] = dist[u] + matrizAdyacencias[u][v];
-			}
-		}
-	}
-	if (mid == 0) {
-		printSolution(dist, cntVertices, parent);
 	}
 }
