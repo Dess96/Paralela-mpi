@@ -41,44 +41,44 @@ int main(int argc, char **argv) {
 	T_vec_vec_int ohd;
 
 	if (!archivoEntrada) { // operador ! sobrecargado
-		cout << "No se pudo abrir el archivo de entrada" << endl;
+		if (mid == 0) {
+			cout << "No se pudo abrir el archivo de entrada" << endl;
+		}
 		cin.ignore();
 		return 1;
 	}
 
-	cout << "INICIA DIJKSTRA_OPENMP" << endl;
-
+	if (mid == 0) {
+		cout << "INICIA DIJKSTRA_OPENMP" << endl;
+	}
 	// se inicializa la matriz de adyacencias:
 	leeAdyacencias(archivoEntrada, ohd, cntVertices, mind);
 
-
-	// se imprime la matriz de adyacencias:
-	for (int i = 0; i < cntVertices; i++) {
-		for (int j = 0; j < cntVertices; j++) {
-			if (ohd[i][j] == i4_huge)
-			{
-				cout << "  Inf";
+	if (mid == 0) {
+		for (int i = 0; i < cntVertices; i++) {
+			for (int j = 0; j < cntVertices; j++) {
+				if (ohd[i][j] == i4_huge) {
+					cout << "  Inf";
+				}
+				else {
+					cout << "  " << setw(3) << ohd[i][j];
+				}
 			}
-			else
-			{
-				cout << "  " << setw(3) << ohd[i][j];
-			}
+			cout << endl;
 		}
-		cout << endl;
 	}
 	distancias_dijkstra(ohd, mind);
 
-	// impresión de resultados:
-	cout << "  Distancias mínimas a partir del nodo 0:" << endl;
-	for (int i = 0; i < cntVertices; i++)
-	{
-		cout << "  " << setw(2) << i
-			<< "  " << setw(2) << mind[i] << "\n";
+	if (mid == 0) {
+		cout << "  Distancias mínimas a partir del nodo 0:" << endl;
+		for (int i = 0; i < cntVertices; i++) {
+			cout << "  " << setw(2) << i
+				<< "  " << setw(2) << mind[i] << "\n";
+		}
+		// finalización:
+		cout << endl;
+		cout << "TERMINA DIJKSTRA_OPENMP" << endl;
 	}
-
-	// finalización:
-	cout << endl;
-	cout << "TERMINA DIJKSTRA_OPENMP" << endl;
 	/* finalización de la ejecución paralela */
 	if (mid == 0)
 		cin.ignore();
@@ -103,18 +103,19 @@ void distancias_dijkstra(const T_vec_vec_int& ohd, T_vec_int& mind) {
 	connected[0] = true;
 
 	mind.resize(cntVertices, 0);
-	for (int i = 0; i < cntVertices; i++)
-	{
+	for (int i = 0; i < cntVertices; i++) {
 		mind[i] = ohd[0][i];
 	}
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_id); 		/* El comunicador le da valor a id (rank del proceso) */
 	MPI_Comm_size(MPI_COMM_WORLD, &nth);  /* El comunicador le da valor a p (número de procesos) */
-	my_first = (my_id       * cntVertices) / nth; // se calcula el límite inferior de las iteraciones que realizará cada hilo
+	my_first = (my_id * cntVertices) / nth; // se calcula el límite inferior de las iteraciones que realizará cada hilo
 	my_last = ((my_id + 1) * cntVertices) / nth - 1; // se calcula el límite superior de las iteraciones que realizará cada hilo
-	cout << endl;
-	cout << "  P" << my_id << ": La region paralela comienza con " << nth << " hilos." << endl;
-	cout << endl;
-	cout << "  P" << my_id << ":  Primero=" << my_first << "  Ultimo=" << my_last << endl;
+	if (my_id == 0) {
+		cout << endl;
+		cout << "  P" << my_id << ": La region paralela comienza con " << nth << " hilos." << endl;
+		cout << endl;
+		cout << "  P" << my_id << ":  Primero=" << my_first << "  Ultimo=" << my_last << endl;
+	}
 
 	for (int my_step = 1; my_step < cntVertices; my_step++) {
 		md = i4_huge;
@@ -126,23 +127,25 @@ void distancias_dijkstra(const T_vec_vec_int& ohd, T_vec_int& mind) {
 		}
 		if (mv != -1) {
 			connected[mv] = true;
-			cout << "  P" << my_id << ": Conectando al nodo " << mv << endl;
+			if (my_id == 0) {
+				cout << "  P" << my_id << ": Conectando al nodo " << mv << endl;
+			}
 		}
 		if (mv != -1) {
 			actualizar_mind(my_first, my_last, mv, connected, ohd, mind);
 		}
 	}
-	cout << endl;
-	cout << "  P" << my_id << ": Saliendo de la region paralela" << endl;
+	if (my_id == 0) {
+		cout << endl;
+		cout << "  P" << my_id << ": Saliendo de la region paralela" << endl;
+	}
 }
 
 void buscar_mas_cercano(int s, int e, const T_vec_int& mind, const vector< bool >& connected, int& d, int& v) {
 	d = i4_huge;
 	v = -1;
-	for (int i = s; i <= e; i++)
-	{
-		if (!connected[i] && mind[i] < d)
-		{
+	for (int i = s; i <= e; i++) {
+		if (!connected[i] && mind[i] < d) {
 			d = mind[i];
 			v = i;
 		}
