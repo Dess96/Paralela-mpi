@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
 
 	MPI_Finalize();
 	return 0;
-}  
+}
 
 void uso(string nombre_prog /* in */) {
 	cerr << nombre_prog.c_str() << " secuencia de parametros de entrada" << endl;
@@ -85,6 +85,7 @@ void generate(int cant) {
 void mergeSort(int cant) {
 	int* send;
 	int* rec = 0;
+	int j = 0;
 	int mid, cnt_proc, tam;
 	MPI_Comm_rank(MPI_COMM_WORLD, &mid); 		/* El comunicador le da valor a id (rank del proceso) */
 	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc);  /* El comunicador le da valor a p (número de procesos) */
@@ -94,21 +95,22 @@ void mergeSort(int cant) {
 	it = arreglo.begin() + (mid*block);
 	sort(it, it + block);
 	for (int i = 0; i < cant; i++) {
-		send[i] = arreglo[i];
+		send[j] = arreglo[j];
+		j++;
 	}
 	tam = cnt_proc * block;
 	if (mid == 0) {
 		rec = (int*)malloc(tam * sizeof(int));;
 	}
-	MPI_Gather(send, block * 4, MPI_INT, rec, block * 4, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Gather(send, block, MPI_INT, rec, block, MPI_INT, 0, MPI_COMM_WORLD);
 	if (mid == 0) {
-		for (int i = 0; i < 8;i++) {
+		for (int i = 0; i < 8; i++) {
 			cout << rec[i] << endl;
 		}
 	}
 }
 
-void merge(int cant, int quantity) {
+/*void merge(int cant, int quantity) {
 	vector<vector<int>> vectors;
 	int shift = quantity;
 	for (int i = 0; i < cant; i++) {
@@ -156,4 +158,4 @@ void merge_v2(int cant, int quantity, int cnt_proc) {
 			}
 		}
 	}
-}
+}*/
