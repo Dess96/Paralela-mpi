@@ -14,12 +14,10 @@ void obt_args(
 	char*    argv[]        /* in  */,
 	int&     cant  /* out */);
 
-void generate(int);
-void mergeSort(int);
+void generate(int, vector<int>&);
+void mergeSort(int, vector<int>&);
 void merge(int, int);
 void merge_v2(int, int, int);
-std::vector<int> arreglo;
-
 
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
@@ -44,8 +42,9 @@ int main(int argc, char* argv[]) {
 		uso("MergeSort");
 	}
 	obt_args(argv, cant);
-	generate(cant);
-	mergeSort(cant);
+	std::vector<int> arreglo;
+	generate(cant, arreglo);
+	mergeSort(cant, arreglo);
 	/* finalización de la ejecución paralela */
 	if (mid == 0)
 		cin.ignore();
@@ -72,7 +71,7 @@ void obt_args(
 #  endif
 }  /* obt_args */
 
-void generate(int cant) {
+void generate(int cant, vector<int>& arreglo) {
 	int random;
 	srand(time(NULL));
 	arreglo.resize(cant);
@@ -80,10 +79,11 @@ void generate(int cant) {
 		random = rand();
 		arreglo[i] = random;
 	}
+	MPI_Bcast(&arreglo[0], arreglo.size(), MPI_INT, 0, MPI_COMM_WORLD);
 }
 
-void mergeSort(int cant) {
-//	int* send;
+void mergeSort(int cant, vector<int>& arreglo) {
+	int* send;
 	int* rec = 0;
 	int j = 0;
 	int mid, cnt_proc, tam;
@@ -91,36 +91,21 @@ void mergeSort(int cant) {
 	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc);  /* El comunicador le da valor a p (número de procesos) */
 	int block = cant / cnt_proc;
 	vector<int>::iterator it;
-//	send = (int*)malloc(block * sizeof(int));
+	send = (int*)malloc(block * sizeof(int));
 	it = arreglo.begin() + (mid*block);
 	sort(it, it + block); //Funciona correctamente
-	int* send = &arreglo[0];
-/*	if (mid == 0) {
-		cout << "arreglo" << endl;
+	for (int i = mid * block; i < (mid*block) + block; ++i) {
+		send[j] = arreglo[i];
+		j++;
 	}
-//	if (mid == 1) {
-		for (int i = 0; i < cant; i++) {
-			if (mid == 0) {
-				cout << arreglo[i] << endl;
-			}
-	//	}
-	}
-		if (mid == 0) {
-			cout << "send" << endl;
-		}
-
-		for (int i = 0; i < cant; i++) {
-			if (mid == 0) {
-				cout << send[i] << endl;
-			}
-		}*/
-	tam = cnt_proc * cant;
+//	send = &arreglo[0];
+	tam = cnt_proc * block;
 	if (mid == 0) {
 		rec = (int*)malloc(tam * sizeof(int));;
 	}
-	MPI_Gather(send, cant, MPI_INT, rec, cant, MPI_INT, 0, MPI_COMM_WORLD);
-	if (mid == 0) {
-		for (int i = 0; i < tam; i++) {
+	MPI_Gather(send, block, MPI_INT, rec, block, MPI_INT, 0, MPI_COMM_WORLD);
+	for (int i = 0; i < tam; i++) {
+		if (mid == 0) {
 			cout << rec[i] << endl;
 		}
 	}
