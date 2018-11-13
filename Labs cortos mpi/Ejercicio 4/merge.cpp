@@ -16,7 +16,7 @@ void obt_args(
 
 void generate(int, vector<int>&);
 void mergeSort(int, vector<int>&);
-void merge(int, int);
+void merge(int, int, vector<int>&, int, int*);
 void merge_v2(int, int, int);
 
 int main(int argc, char* argv[]) {
@@ -98,7 +98,6 @@ void mergeSort(int cant, vector<int>& arreglo) {
 		send[j] = arreglo[i];
 		j++;
 	}
-//	send = &arreglo[0];
 	tam = cnt_proc * block;
 	if (mid == 0) {
 		rec = (int*)malloc(tam * sizeof(int));;
@@ -109,9 +108,10 @@ void mergeSort(int cant, vector<int>& arreglo) {
 			cout << rec[i] << endl;
 		}
 	}
+	merge(cant, block, arreglo, mid, rec);
 }
 
-/*void merge(int cant, int quantity) {
+void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec) {
 	vector<vector<int>> vectors;
 	int shift = quantity;
 	for (int i = 0; i < cant; i++) {
@@ -119,9 +119,19 @@ void mergeSort(int cant, vector<int>& arreglo) {
 		temp.resize(cant);
 		vectors.push_back(temp);
 	}
-	vector<int>::iterator it1 = arreglo.begin();
-	merge(it1, it1 + quantity, it1 + quantity, it1 + 2 * quantity, vectors[0].begin());
-	vector<int>::iterator it2 = vectors[0].begin();
+//	vector<int>::iterator it1 = arreglo.begin();
+	int* it1 = &rec[0];
+/*	if (mid == 0) {
+		cout << " it1 " << *it1 << endl;
+		it1 += quantity;
+		cout << " it2 " << *it1 << endl;
+		cout << " it3 " << *it1 + 2 * quantity << endl;
+	}*/
+
+	if (mid == 0) {
+		merge(it1, it1 + quantity, it1 + quantity, it1 + 2 * quantity, vectors[0].begin());
+	}
+/*	vector<int>::iterator it2 = vectors[0].begin();
 	for (int i = 1; i <= cant; i++) {
 		if ((quantity * shift) < cant && (quantity * shift + quantity) <= cant) {
 			merge(it2, it2 + quantity * shift, it1 + quantity * shift, it1 + quantity * shift + quantity, vectors[i].begin());
@@ -129,9 +139,16 @@ void mergeSort(int cant, vector<int>& arreglo) {
 			shift++;
 			it1 = vectors[i].begin();
 		}
+	}*/
+	for (int i = 0; i < vectors.size(); i++) {
+		for (int j = 0; j < vectors[i].size(); j++) {
+			cout << vectors[i][j] << " ";
+		}
+		cout << endl;
 	}
 }
-void merge_v2(int cant, int quantity, int cnt_proc) {
+
+/*void merge_v2(int cant, int quantity, int cnt_proc) {
 	vector<vector<int>> vectors;
 	vector<int>::iterator it1 = arreglo.begin();
 	vector<int>::iterator it2 = arreglo.begin();
