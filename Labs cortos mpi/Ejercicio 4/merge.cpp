@@ -83,7 +83,7 @@ void generate(int cant) {
 }
 
 void mergeSort(int cant) {
-	int* send;
+//	int* send;
 	int* rec = 0;
 	int j = 0;
 	int mid, cnt_proc, tam;
@@ -91,20 +91,36 @@ void mergeSort(int cant) {
 	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc);  /* El comunicador le da valor a p (número de procesos) */
 	int block = cant / cnt_proc;
 	vector<int>::iterator it;
-	send = (int*)malloc(block * sizeof(int));
+//	send = (int*)malloc(block * sizeof(int));
 	it = arreglo.begin() + (mid*block);
-	sort(it, it + block);
-	for (int i = 0; i < cant; i++) {
-		send[j] = arreglo[j];
-		j++;
+	sort(it, it + block); //Funciona correctamente
+	int* send = &arreglo[0];
+/*	if (mid == 0) {
+		cout << "arreglo" << endl;
 	}
-	tam = cnt_proc * block;
+//	if (mid == 1) {
+		for (int i = 0; i < cant; i++) {
+			if (mid == 0) {
+				cout << arreglo[i] << endl;
+			}
+	//	}
+	}
+		if (mid == 0) {
+			cout << "send" << endl;
+		}
+
+		for (int i = 0; i < cant; i++) {
+			if (mid == 0) {
+				cout << send[i] << endl;
+			}
+		}*/
+	tam = cnt_proc * cant;
 	if (mid == 0) {
 		rec = (int*)malloc(tam * sizeof(int));;
 	}
-	MPI_Gather(send, block, MPI_INT, rec, block, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Gather(send, cant, MPI_INT, rec, cant, MPI_INT, 0, MPI_COMM_WORLD);
 	if (mid == 0) {
-		for (int i = 0; i < 8; i++) {
+		for (int i = 0; i < tam; i++) {
 			cout << rec[i] << endl;
 		}
 	}
@@ -130,7 +146,6 @@ void mergeSort(int cant) {
 		}
 	}
 }
-
 void merge_v2(int cant, int quantity, int cnt_proc) {
 	vector<vector<int>> vectors;
 	vector<int>::iterator it1 = arreglo.begin();
