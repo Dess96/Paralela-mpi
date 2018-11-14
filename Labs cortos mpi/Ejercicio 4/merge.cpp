@@ -124,12 +124,12 @@ void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int 
 	if (mid == 0) {
 		merge(it1, it1 + quantity, it1 + quantity, it1 + 2 * quantity, vectors[0].begin()); //Funciona correctamente
 		if (cnt_proc > 2) {
-			int* it2 = &vectors[0][0];
-			for (int i = 1; i <= quantity-2; i++) {
-				merge(it2, it2 + quantity * (i+1), it1 + quantity * (i+1), it1 + quantity * (i + 1) + quantity, vectors[i].begin());
-				it2 = &vectors[i][0];
-				shift++;
-				it1 = &vectors[i][0];
+			int* it2 = &vectors[0][0]; 
+			for (int i = 1; i <= quantity-1; i++) { 
+				if (!is_sorted(vectors[i-1].begin(), vectors[i-1].end())) {
+					merge(it2, it2 + quantity * (i + 1), it1 + quantity * (i + 1), it1 + quantity * (i + 1) + quantity, vectors[i].begin());
+					it2 = &vectors[i][0];
+				}
 			}
 		}
 	}
