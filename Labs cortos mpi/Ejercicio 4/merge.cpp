@@ -17,7 +17,7 @@ void obt_args(
 void generate(int, vector<int>&);
 void mergeSort(int, vector<int>&);
 void merge(int, int, vector<int>&, int, int*, int);
-void merge_v2(int, int, int);
+void merge_v2(int, int, int, vector<int>, int);
 
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
@@ -108,7 +108,8 @@ void mergeSort(int cant, vector<int>& arreglo) {
 			cout << rec[i] << endl;
 		}
 	}
-	merge(cant, block, arreglo, mid, rec, cnt_proc);
+//	merge(cant, block, arreglo, mid, rec, cnt_proc);
+	merge_v2(cant, block, cnt_proc, arreglo, mid);
 }
 
 void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int cnt_proc) {
@@ -144,31 +145,38 @@ void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int 
 	}
 }
 
-/*void merge_v2(int cant, int quantity, int cnt_proc) {
+void merge_v2(int cant, int quantity, int cnt_proc, vector<int> arreglo, int mid) {
 	vector<vector<int>> vectors;
 	vector<int>::iterator it1 = arreglo.begin();
 	vector<int>::iterator it2 = arreglo.begin();
-	int half;
+	int i = 0;
 	int j = 0;
-	int shift = quantity;
+	quantity = 2;
 	for (int i = 0; i < cant; i++) {
 		vector<int> temp;
 		temp.resize(cant);
 		vectors.push_back(temp);
 	}
-	for (int niveles = 2; niveles < cnt_proc; niveles = niveles * 2) {
-		half = cnt_proc / 2;
-		for (int i = 0; i < cant; i++) {
-			merge(it1, it1 + shift, it2 + shift + 1, (it2 + (2 * shift)), vectors[i].begin());
-			if ((arreglo.begin() + (2 * shift)) != arreglo.end()) {
-				it1 = arreglo.begin() + 2 * shift;
+	merge(it1, it1 + quantity, it2 + quantity, it2 + 2 * quantity, vectors[i].begin());
+	while ((it2 + (2 * quantity)) != arreglo.end()) {
+		it1 = arreglo.begin() + 2 * quantity;
+		it2 = it1;
+		++i;
+		merge(it1, it1 + quantity, it2 + quantity, it2 + 2 * quantity, vectors[i].begin());
+	}
+	it1 = vectors[j].begin();
+	quantity *= 2;
+	++j;
+	++i;
+	it2 = vectors[j].begin();
+	merge(it1, it1 + quantity, it2, it2 + quantity, vectors[i].begin());
+	if (mid == 0) {
+		cout << "Rec despues de ordenar" << endl;
+		for (int i = 0; i < vectors.size(); i++) {
+			for (int j = 0; j < vectors[i].size(); j++) {
+				cout << vectors[i][j] << " ";
 			}
-			else {
-				it1 = vectors[j].begin();
-				j++;
-				it2 = vectors[j].begin();
-				shift = 2 * quantity;
-			}
+			cout << endl;
 		}
 	}
-}*/
+}
