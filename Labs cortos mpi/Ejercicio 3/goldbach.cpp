@@ -60,6 +60,7 @@ int main(int argc, char* argv[]) {
 	int n2;
 	int diff2;
 	int it3;
+	int vecTam;
 	block = num / cnt_proc;
 	send = (int*)malloc(block * 4 * sizeof(int));
 	tam = cnt_proc * block * 4;
@@ -77,6 +78,7 @@ int main(int argc, char* argv[]) {
 			ind++;
 		}
 	}
+	vecTam = ind--;
 	MPI_Barrier(MPI_COMM_WORLD);
 	local_start = MPI_Wtime();
 
@@ -84,10 +86,10 @@ int main(int argc, char* argv[]) {
 		if (i > 5) {
 			diff = i - 2;
 			if (diff % 2 == 0) {
-				int it2 = ind--;
+				int it2 = vecTam;
 			    n2 = primes[it2];
 				bool isPrime = false;
-				while ((n2 < diff) && (it2 > num / 2) && !isPrime) {
+				while ((it2 >= 0) && !isPrime) {
 					diff2 = diff - n2;
 					it3 = 0;
 					while (it3 < num / 2 && !isPrime) {
@@ -107,7 +109,7 @@ int main(int argc, char* argv[]) {
 						}
 					}
 					if (!isPrime) {
-						it2++;
+						--it2;
 						n2 = primes[it2];
 					}
 				}
@@ -133,10 +135,10 @@ int main(int argc, char* argv[]) {
 	local_elapsed = local_finish - local_start;
 	MPI_Reduce(&local_elapsed, &elapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-/*	if (mid == 0)
-		cout << "Tiempo transcurrido = " << elapsed << endl;*/
+	if (mid == 0)
+		cout << "Tiempo transcurrido = " << elapsed << endl;
 
-	for (int i = 0; i < tam; i += 4) {
+/*	for (int i = 0; i < tam; i += 4) {
 		if (mid == 0) {
 			cout << "El numero " << rec[i] << " esta compuesto por " << rec[i + 1] << ", " << rec[i + 2] << " y " << rec[i + 3] << endl;
 		}
