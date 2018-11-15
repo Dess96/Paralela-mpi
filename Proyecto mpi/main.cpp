@@ -68,7 +68,7 @@ int main(int argc, char * argv[]) {
 		MPI_Reduce(&local_elapsed, &elapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
 		if (mid == 0) {
-			cout << "Tiempo transcurrido = " << elapsed << endl;
+			cout << "Tiempo transcurrido = " << elapsed - arch_time << endl;
 			cout << endl;
 			cout << "Desea ver otra simulacion?" << endl;
 			cout << "1. Si   2. No" << endl;

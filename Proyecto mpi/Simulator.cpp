@@ -3,6 +3,7 @@
 #include<iostream>
 #include<random>
 #include<fstream>
+#include <mpi.h> 
 
 using namespace std;
 
@@ -18,6 +19,8 @@ int healthy_people, dead_people, sick_people, inmune_people;
 double infected, infectiousness, chance_recover;
 
 int Simulator::initialize(int number_peopleM, double infectiousnessM, double chance_recoverM, int death_durationM, double infectedM, int world_sizeM, int ticM, int thread_countM) {
+	int mid;
+	MPI_Comm_rank(MPI_COMM_WORLD, &mid); 		/* El comunicador le da valor a id (rank del proceso) */
 	random_device rd;
 	int perc;
 	int healthy;
@@ -31,8 +34,7 @@ int Simulator::initialize(int number_peopleM, double infectiousnessM, double cha
 	tic = ticM;
 	thread_count = thread_countM;
 	Person p;
-#pragma omp single
-	{
+	if(mid == 0) {
 		v.resize(world_size); //Vector de vectores de tamaño world_size*world_size
 		world.resize(world_size, v);
 		peopleVec.resize(number_people);
@@ -70,6 +72,11 @@ int Simulator::initialize(int number_peopleM, double infectiousnessM, double cha
 }
 
 double Simulator::update(string name, int healthy) {
+	int mid;
+	MPI_Comm_rank(MPI_COMM_WORLD, &mid); 		/* El comunicador le da valor a id (rank del proceso) */
+	double local_start, local_finish, local_elapsed, elapsed;
+	double local_start2, local_finish2, local_elapsed2, elapsed2;
+	double local_start3, local_finish3, local_elapsed3, elapsed3;
 	healthy_people = healthy; //Inicializar nos dio el numero de sanos 
 	sick_people = number_people - healthy; //Los enfermos son el resto
 	random_device generator;
@@ -82,6 +89,8 @@ double Simulator::update(string name, int healthy) {
 	bool stable = 0; //Termina el while cuando todo se estabiliza
 	do {
 #pragma omp parallel for num_threads(thread_count) reduction(+:dead_people, sick_people, inmune_people, healthy_people)
+		MPI_Barrier(MPI_COMM_WORLD); //Calcular tiempo por tic
+		local_start2 = MPI_Wtime(); //**
 		for (int i = 0; i < peopleVec.size(); i++) { //Usamos reduction para hacer las sumas por hilo en las variables globales
 			x = peopleVec[i].getX();
 			y = peopleVec[i].getY();
@@ -133,11 +142,31 @@ double Simulator::update(string name, int healthy) {
 			peopleVec[i].setY(pos2);
 			isSick = 0;
 		}
+		MPI_Barrier(MPI_COMM_WORLD); //Quitar el tiempo de escritura en archivo
+		local_start = MPI_Wtime(); //*
 		stable = clear(actual_tic, name); //*
+		local_finish = MPI_Wtime(); //*
+		local_elapsed = local_finish - local_start; //*
+		MPI_Reduce(&local_elapsed, &elapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD); //*Tiempo escritura en archivos
+		out_time += elapsed;
 		actual_tic++;
+		local_finish2 = MPI_Wtime(); //**
+		local_elapsed2 = local_finish2 - local_start2; //**
+		MPI_Reduce(&local_elapsed2, &elapsed2, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD); //**Tiempo por tic
+		MPI_Barrier(MPI_COMM_WORLD); //Quitar el tiempo de escritura en consola
+		local_start3 = MPI_Wtime(); //***
+		if (mid == 0) {
+			cout << "Duracion del tic " << actual_tic << " " << elapsed2 << " segundos" << endl;
+		}
+		local_finish3 = MPI_Wtime(); //***
+		local_elapsed3 = local_finish3 - local_start3; //***
+		MPI_Reduce(&local_elapsed3, &elapsed3, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD); //***Tiempo escritura en consola
+		out_time += elapsed3;
 	} while (!stable && (actual_tic <= tic));
-	cout << std::endl;
-	cout << "Archivo generado" << endl;
+	if (mid == 0) {
+		cout << std::endl;
+		cout << "Archivo generado" << endl;
+	}
 	peopleVec.clear(); //Se limpian las ed's para nuevas simulaciones. Ademas se limpian las variables
 	world.clear();
 	dead_people = sick_people = healthy_people = inmune_people = 0;
