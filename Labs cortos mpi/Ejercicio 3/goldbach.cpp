@@ -25,17 +25,16 @@ void uso(string nombre_prog);
 
 void obt_args(char* argv[], int& num);
 
-void find(int diff, int num, int* send, int& buff, int i);
+void find(int diff, int num, int* send, int& buff, int i, int n);
 
 vector<int> primes;
 
 int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
-	int it2, n2, it3, diff, diff2, num, quan, block;
+	int diff, num, quan, block;
 	int buff = 0;
 	int ind = 0;
-	bool isPrime;
 	double local_start, local_finish, local_elapsed, elapsed;
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
 
@@ -54,16 +53,16 @@ int main(int argc, char* argv[]) {
 	if (mid == 0) {
 		uso("Conjetura de Goldbach");
 	}
-	MPI_Barrier(MPI_COMM_WORLD);
-	local_start = MPI_Wtime();
-
 	obt_args(argv, num);
 	int *rec = 0;
 	int* send;
 	int tam;
+	int n2;
+	int diff2;
+	int it3;
 	block = num / cnt_proc;
 	send = (int*)malloc(block * 4 * sizeof(int));
-    tam = cnt_proc * block * 4;
+	tam = cnt_proc * block * 4;
 	primes.resize(num);
 
 	for (int i = 2; i < num; i++) { //Llenamos una lista con numeros primos
@@ -78,16 +77,49 @@ int main(int argc, char* argv[]) {
 			ind++;
 		}
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	local_start = MPI_Wtime();
 
 	for (int i = mid * block; i < (mid*block) + block; ++i) { //Ciclo principal
-		if (i > 5) {	
+		if (i > 5) {
 			diff = i - 2;
 			if (diff % 2 == 0) {
-				find(diff, num, send, buff, i);
-			}
-			else {
-				diff = i - 3;
-				find(diff, num, send, buff, i);
+				int it2 = ind--;
+			    n2 = primes[it2];
+				bool isPrime = false;
+				while ((n2 < diff) && (it2 > num / 2) && !isPrime) {
+					diff2 = diff - n2;
+					it3 = 0;
+					while (it3 < num / 2 && !isPrime) {
+						if (diff2 == primes[it3]) {
+							isPrime = true;
+							send[buff] = i;
+							buff++;
+							send[buff] = diff2;
+							buff++;
+							send[buff] = 2;
+							buff++;
+							send[buff] = n2;
+							buff++;
+						}
+						else {
+							it3++;
+						}
+					}
+					if (!isPrime) {
+						it2++;
+						n2 = primes[it2];
+					}
+				}
+			} else {
+				send[buff] = i;
+				buff++;
+				send[buff] = diff2;
+				buff++;
+				send[buff] = 3;
+				buff++;
+				send[buff] = n2;
+				buff++;
 			}
 		}
 	}
@@ -116,13 +148,13 @@ int main(int argc, char* argv[]) {
 
 	MPI_Finalize();
 	return 0;
-}  
+}
 
 void uso(string nombre_prog) {
 	cerr << nombre_prog.c_str() << " secuencia de parametros de entrada" << endl;
 	cout << "Los parametros de entrada son la cantidad de hilos y el n al que le vamos a calcular el numero Goldbach" << endl;
 	cout << "La salida es la secuencia de numeros que componen la suma" << endl;
-} 
+}
 
 void obt_args(
 	char*    argv[],
@@ -133,37 +165,4 @@ void obt_args(
 #  ifdef DEBUG
 	cout << "dato_salida = " << num << endl;
 #  endif
-}  
-
-void find(int diff, int num, int* send, int& buff, int i) {
-	int it2 = 0;
-	int n2 = primes[it2];
-	int it3;
-	int diff2;
-	bool isPrime = false;
-	while ((n2 < diff) && (it2 < num) && !isPrime) {
-		diff2 = diff - n2;
-		it3 = 0;
-		while (it3 < num && !isPrime) {
-			if (diff2 == primes[it3]) {
-				isPrime = true;
-				send[buff] = i;
-				buff++;
-				send[buff] = diff2;
-				buff++;
-				send[buff] = 3;
-				buff++;
-				send[buff] = n2;
-				buff++;
-
-			}
-			else {
-				it3++;
-			}
-		}
-		if (!isPrime) {
-			it2++;
-			n2 = primes[it2];
-		}
-	}
 }
