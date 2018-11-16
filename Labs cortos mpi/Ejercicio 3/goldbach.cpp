@@ -25,8 +25,6 @@ void uso(string nombre_prog);
 
 void obt_args(char* argv[], int& num);
 
-void find(int diff, int num, int* send, int& buff, int i, int n);
-
 vector<int> primes;
 
 int main(int argc, char* argv[]) {
@@ -56,11 +54,8 @@ int main(int argc, char* argv[]) {
 	obt_args(argv, num);
 	int *rec = 0;
 	int* send;
-	int tam;
-	int n2;
-	int diff2;
-	int it3;
-	int vecTam;
+	int tam, n2, diff2, it2;
+	int it3 = 0;
 	block = num / cnt_proc;
 	send = (int*)malloc(block * 4 * sizeof(int));
 	tam = cnt_proc * block * 4;
@@ -78,51 +73,51 @@ int main(int argc, char* argv[]) {
 			ind++;
 		}
 	}
-	vecTam = ind--;
 	MPI_Barrier(MPI_COMM_WORLD);
 	local_start = MPI_Wtime();
 
-	for (int i = mid * block; i < (mid*block) + block; ++i) { //Ciclo principal
-		if (i > 5) {
-			diff = i - 2;
-			if (diff % 2 == 0) {
-				int it2 = vecTam;
-			    n2 = primes[it2];
-				bool isPrime = false;
-				while ((it2 >= 0) && !isPrime) {
-					diff2 = diff - n2;
-					it3 = 0;
-					while (it3 < num / 2 && !isPrime) {
-						if (diff2 == primes[it3]) {
-							isPrime = true;
-							send[buff] = i;
-							buff++;
-							send[buff] = diff2;
-							buff++;
-							send[buff] = 2;
-							buff++;
-							send[buff] = n2;
-							buff++;
-						}
-						else {
-							it3++;
-						}
+	for (int i = 5 + mid * block; i < 5 + (mid*block) + block; ++i) { //Ciclo principal
+		diff = i - 2;
+		if (diff % 2 == 0) {
+			it2 = 0;
+			n2 = primes[it2];
+			bool isPrime = false;
+			while ((it2 < num / 2) && !isPrime && n2 != 0) {
+				diff2 = diff - n2;
+				if (it2 > 0) {
+					it3 = it2 - 1;
+				}
+				while ((it3 < num / 2) && !isPrime && primes[it3] != 0) {
+					if (diff2 == primes[it3]) {
+						isPrime = true;
+						send[buff] = i;
+						buff++;
+						send[buff] = diff2;
+						buff++;
+						send[buff] = 2;
+						buff++;
+						send[buff] = n2;
+						buff++;
 					}
-					if (!isPrime) {
-						--it2;
-						n2 = primes[it2];
+					else {
+						it3++;
 					}
 				}
-			} else {
-				send[buff] = i;
-				buff++;
-				send[buff] = diff2;
-				buff++;
-				send[buff] = 3;
-				buff++;
-				send[buff] = n2;
-				buff++;
+				if (!isPrime) {
+					it2++;
+					n2 = primes[it2];
+				}
 			}
+		}
+		else {
+			send[buff] = i;
+			buff++;
+			send[buff] = diff2;
+			buff++;
+			send[buff] = 3;
+			buff++;
+			send[buff] = n2;
+			buff++;
 		}
 	}
 
