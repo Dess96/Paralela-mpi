@@ -143,11 +143,16 @@ void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
 	int half = cnt_proc / 2;
 	int iSend, iRec, part;
 	int* send;
+	int* sendC = 0;
 	int* rec;
+	int* recC = 0;
+	int* it1;
 	vector<vector<int>> vectors;
 	vector<int>::iterator it;
-	send = new int[2 * block];
-	rec = new int[2 * block];
+	send = new int[block];
+	rec = new int[block];
+	sendC = new int[block];
+	recC = new int[block];
 	for (int i = 0; i < cant; i++) {
 		vector<int> temp;
 		temp.resize(cant);
@@ -157,18 +162,30 @@ void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
 	if (mid >= half) {
 		iSend = mid - half;
 		merge(it + iSend * block, it + iSend * block + block - 1, it + iSend * block + block - 1, it + iSend * block + block, &send[0]);
-		MPI_Send(send, 2 * block, MPI_INT, iSend, 0, MPI_COMM_WORLD);
+		MPI_Send(send, block, MPI_INT, iSend, 0, MPI_COMM_WORLD);
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	if (mid < half) {
 		iRec = mid + half;
-		MPI_Recv(rec, 2 * block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(rec, block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	//	while (half > 1) {
+			half /= 2;
+			if (mid < half) {
+				sendC = &rec[0];
+				iSend = mid + half;
+				MPI_Send(sendC, block, MPI_INT, iSend, 0, MPI_COMM_WORLD);
+			}
+			else {
+				iRec = mid - half;
+				MPI_Recv(recC, block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			}
+	//	}
 	}
 	if (mid == 0) {
 		cout << "Impresion desde proceso cuatro" << endl;
-		for (int i = 0; i < 2 * block; i++) {
-			cout << rec[i] << endl;
+		for (int i = 0; i < block; i++) {
+			cout << sendC[i] << endl;
 		}
 	}
 /*	cout << "Rec despues de ordenar" << endl;
