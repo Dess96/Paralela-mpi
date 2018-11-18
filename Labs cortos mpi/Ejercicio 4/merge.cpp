@@ -141,7 +141,7 @@ void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int 
 
 void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
 	int half = cnt_proc / 2;
-	int iSend, iRec;
+	int iSend, iRec, part;
 	int* send;
 	int* rec;
 	vector<vector<int>> vectors;
@@ -154,16 +154,18 @@ void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
 		vectors.push_back(temp);
 	}
 	it = arreglo.begin();
-	if (mid < half) {
-		merge(it + mid * block, it + mid * block + block - 1, it + mid * block + block - 1, it + mid * block + block, &send[0]);
-		iSend = mid + half;
+	if (mid >= half) {
+		iSend = mid - half;
+		merge(it + iSend * block, it + iSend * block + block - 1, it + iSend * block + block - 1, it + iSend * block + block, &send[0]);
 		MPI_Send(send, 2 * block, MPI_INT, iSend, 0, MPI_COMM_WORLD);
 	}
-	if (mid >= half) {
-		iRec = mid - half;
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	if (mid < half) {
+		iRec = mid + half;
 		MPI_Recv(rec, 2 * block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
-	if (mid == 5) {
+	if (mid == 0) {
 		cout << "Impresion desde proceso cuatro" << endl;
 		for (int i = 0; i < 2 * block; i++) {
 			cout << rec[i] << endl;
