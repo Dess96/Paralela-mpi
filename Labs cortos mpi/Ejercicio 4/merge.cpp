@@ -142,17 +142,19 @@ void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int 
 void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
 	int half = cnt_proc / 2;
 	int iSend, iRec, part;
+	int shift = 1;
 	int* send;
 	int* sendC = 0;
 	int* rec;
 	int* recC = 0;
 	int* it1;
+	int* it2;
 	vector<vector<int>> vectors;
 	vector<int>::iterator it;
-	send = new int[block];
-	rec = new int[block];
-	sendC = new int[block];
-	recC = new int[block];
+	send = new int[cant];
+	rec = new int[cant];
+	sendC = new int[cant];
+	recC = new int[cant];
 	for (int i = 0; i < cant; i++) {
 		vector<int> temp;
 		temp.resize(cant);
@@ -163,13 +165,13 @@ void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
 		iSend = mid - half;
 		merge(it + iSend * block, it + iSend * block + block - 1, it + iSend * block + block - 1, it + iSend * block + block, &send[0]);
 		MPI_Send(send, block, MPI_INT, iSend, 0, MPI_COMM_WORLD);
+		MPI_Barrier(MPI_COMM_WORLD); //Funciona correctamente
 	}
-	MPI_Barrier(MPI_COMM_WORLD);
 
 	if (mid < half) {
 		iRec = mid + half;
-		MPI_Recv(rec, block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	//	while (half > 1) {
+		MPI_Recv(rec, block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); //Funciona correctamente
+	//	do {
 			half /= 2;
 			if (mid < half) {
 				sendC = &rec[0];
@@ -177,22 +179,31 @@ void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
 				MPI_Send(sendC, block, MPI_INT, iSend, 0, MPI_COMM_WORLD);
 			}
 			else {
+				it1 = &rec[0];
 				iRec = mid - half;
 				MPI_Recv(recC, block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				it2 = &recC[0];
+				merge(it1, it1 + shift * block, it2, it2 + shift * block, vectors[mid].begin());
+				rec = &vectors[mid][0];
+				shift *= 2;
 			}
-	//	}
+	//	} while (half > 1);
 	}
-	if (mid == 0) {
+/*	if (mid == 2) {
 		cout << "Impresion desde proceso cuatro" << endl;
-		for (int i = 0; i < block; i++) {
-			cout << sendC[i] << endl;
+		for (int i = 0; i <  2 * block; i++) {
+			cout << rec[i] << endl;
+		}
+	}*/
+	if (mid == 2 || mid == 3) {
+		cout << "Rec despues de ordenar" << endl;
+		for (int i = 0; i < vectors.size(); i++) {
+			for (int j = 0; j < vectors[i].size(); j++) {
+				cout << vectors[i][j] << " ";
+			}
+			cout << endl;
 		}
 	}
-/*	cout << "Rec despues de ordenar" << endl;
-	for (int i = 0; i < vectors.size(); i++) {
-		for (int j = 0; j < vectors[i].size(); j++) {
-			cout << vectors[i][j] << " ";
-		}
-		cout << endl;
-	}*/
+	
+	
 }
