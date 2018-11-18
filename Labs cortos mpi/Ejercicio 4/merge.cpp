@@ -60,7 +60,7 @@ void obt_args(char* argv[], int& cant) {
 #  ifdef DEBUG
 	cout << "cant = " << cant << endl;
 #  endif
-} 
+}
 
 void generate(int cant, vector<int>& arreglo) {
 	int random;
@@ -115,13 +115,13 @@ void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int 
 		vectors.push_back(temp);
 	}
 	int* it1 = &rec[0];
-	
+
 	if (mid == 0) {
 		merge(it1, it1 + quantity, it1 + quantity, it1 + 2 * quantity, vectors[0].begin()); //Funciona correctamente
 		if (cnt_proc > 2) {
-			int* it2 = &vectors[0][0]; 
-			for (int i = 1; i <= quantity-1; i++) { 
-				if (!is_sorted(vectors[i-1].begin(), vectors[i-1].end())) {
+			int* it2 = &vectors[0][0];
+			for (int i = 1; i <= quantity - 1; i++) {
+				if (!is_sorted(vectors[i - 1].begin(), vectors[i - 1].end())) {
 					merge(it2, it2 + quantity * (i + 1), it1 + quantity * (i + 1), it1 + quantity * (i + 1) + quantity, vectors[i].begin());
 					it2 = &vectors[i][0];
 				}
@@ -141,28 +141,39 @@ void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int 
 
 void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
 	int half = cnt_proc / 2;
+	int iSend, iRec;
+	int* send;
+	int* rec;
 	vector<vector<int>> vectors;
 	vector<int>::iterator it;
+	send = new int[2 * block];
+	rec = new int[2 * block];
 	for (int i = 0; i < cant; i++) {
 		vector<int> temp;
 		temp.resize(cant);
 		vectors.push_back(temp);
 	}
 	it = arreglo.begin();
-	it = it + mid * block + block;
-	if (mid == 0) {
-		cout << "Puntero" << endl;
-		cout << (*it) << endl;
-	}
-	
 	if (mid < half) {
-		merge(it + mid * block, it + mid * block + block - 1, it + mid * block + block - 1, it + mid * block + block, vectors[mid].begin());
+		merge(it + mid * block, it + mid * block + block - 1, it + mid * block + block - 1, it + mid * block + block, &send[0]);
+		iSend = mid + half;
+		MPI_Send(send, 2 * block, MPI_INT, iSend, 0, MPI_COMM_WORLD);
 	}
-		cout << "Rec despues de ordenar" << endl;
-		for (int i = 0; i < vectors.size(); i++) {
-			for (int j = 0; j < vectors[i].size(); j++) {
-				cout << vectors[i][j] << " ";
-			}
-			cout << endl;
+	if (mid >= half) {
+		iRec = mid - half;
+		MPI_Recv(rec, 2 * block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
+	if (mid == 5) {
+		cout << "Impresion desde proceso cuatro" << endl;
+		for (int i = 0; i < 2 * block; i++) {
+			cout << rec[i] << endl;
 		}
+	}
+/*	cout << "Rec despues de ordenar" << endl;
+	for (int i = 0; i < vectors.size(); i++) {
+		for (int j = 0; j < vectors[i].size(); j++) {
+			cout << vectors[i][j] << " ";
+		}
+		cout << endl;
+	}*/
 }
