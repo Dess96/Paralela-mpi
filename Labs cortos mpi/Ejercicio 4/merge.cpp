@@ -76,6 +76,8 @@ void generate(int cant, vector<int>& arreglo) {
 }
 
 void mergeSort(int cant, vector<int>& arreglo) {
+	double local_start, local_finish, local_elapsed, elapsed;
+	double local_start2, local_finish2, local_elapsed2, elapsed2;
 	int* send;
 	int* rec = 0;
 	int j = 0;
@@ -100,8 +102,27 @@ void mergeSort(int cant, vector<int>& arreglo) {
 	}
 	MPI_Gather(send, block, MPI_INT, rec, block, MPI_INT, 0, MPI_COMM_WORLD);
 
+	MPI_Barrier(MPI_COMM_WORLD);
+	local_start = MPI_Wtime();
+
 	merge(cant, block, arreglo, mid, rec, cnt_proc);
-	//merge_v2(cant, block, cnt_proc, arreglo, mid);
+
+	local_finish = MPI_Wtime();
+	local_elapsed = local_finish - local_start;
+	MPI_Reduce(&local_elapsed, &elapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	if (mid == 0)
+		cout << "Tiempo transcurrido merge v1= " << elapsed << endl;
+	
+	MPI_Barrier(MPI_COMM_WORLD);
+	local_start2 = MPI_Wtime();
+
+	merge_v2(cant, block, cnt_proc, arreglo, mid);
+
+	local_finish2 = MPI_Wtime();
+	local_elapsed2 = local_finish2 - local_start2;
+	MPI_Reduce(&local_elapsed2, &elapsed2, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	if (mid == 0)
+		cout << "Tiempo transcurrido merge v2= " << elapsed2 << endl;
 }
 
 void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int cnt_proc) {
@@ -126,7 +147,7 @@ void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int 
 			}
 		}
 	}
-	if (mid == 0) {
+/*	if (mid == 0) {
 		cout << "Rec despues de ordenar" << endl;
 		for (int i = 0; i < vectors.size(); i++) {
 			for (int j = 0; j < vectors[i].size(); j++) {
@@ -134,7 +155,7 @@ void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int 
 			}
 			cout << endl;
 		}
-	}
+	}*/
 }
 
 void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
@@ -182,12 +203,12 @@ void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
 		half /= 2;
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
-	if (mid == 0) {
+/*	if (mid == 0) {
 		cout << "Proceso 0" << endl;
 		for (int i = 0; i < shift * block; i++) {
-			cout << recC[i] << " " << mid <<endl;
+			cout << recC[i] << " " << mid << endl;
 		}
-	}
+	}*/
 }
 
 bool sender(int mid, int cnt_proc, int shift) {
