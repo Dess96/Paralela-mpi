@@ -8,36 +8,6 @@ using namespace std;
 
 //#define DEBUG
 
-bool esPadre(int nivel_arbol, int process_ID, int process_num) {
-	if (process_ID == 0) return true;
-	if (nivel_arbol == 8) {
-		if (process_ID % 2 == 0) return true;
-	}
-	else if (nivel_arbol == 4) {
-		if (process_ID == process_num / 2) return true;
-	}
-	return false;
-}
-
-bool esHijo(int nivel_arbol, int process_ID, int process_num) {
-	if (process_ID == 0) return false;
-	if (nivel_arbol == 8) {
-		if (process_ID % 2 == 1) return true;
-	}
-	else if (nivel_arbol == 4) {
-		if (process_num == 8) {
-			if (process_ID == 2 || process_ID == 6) return true;
-		}
-		else if (process_num == 4) {
-			if (process_ID % 2 == 1) return true;
-		}
-	}
-	else if (nivel_arbol == 2) {
-		if (process_ID == process_num / 2) return true;
-	}
-	return false;
-}
-
 void uso(string nombre_prog);
 void obt_args(char* argv[], int& cant);
 void generate(int, vector<int>&);
@@ -49,10 +19,10 @@ int main(int argc, char* argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
 	int cant;
-	MPI_Status mpi_status; // para capturar estado al finalizar invocaci髇 de funciones MPI
+	MPI_Status mpi_status; // para capturar estado al finalizar invocaci贸n de funciones MPI
 	MPI_Init(&argc, &argv);             		/* Arranca ambiente MPI */
 	MPI_Comm_rank(MPI_COMM_WORLD, &mid); 		/* El comunicador le da valor a id (rank del proceso) */
-	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc);  /* El comunicador le da valor a p (n鷐ero de procesos) */
+	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc);  /* El comunicador le da valor a p (n煤mero de procesos) */
 
 #  ifdef DEBUG 
 	if (mid == 0)
@@ -60,7 +30,7 @@ int main(int argc, char* argv[]) {
 	MPI_Barrier(MPI_COMM_WORLD);
 #  endif
 
-	/* ejecuci髇 del proceso principal */
+	/* ejecuci贸n del proceso principal */
 	if (mid == 0) {
 		uso("MergeSort");
 	}
@@ -68,11 +38,11 @@ int main(int argc, char* argv[]) {
 	std::vector<int> arreglo;
 	generate(cant, arreglo);
 	mergeSort(cant, arreglo);
-	/* finalizaci髇 de la ejecuci髇 paralela */
+	/* finalizaci贸n de la ejecuci贸n paralela */
 
 	if (mid == 0)
 		cin.ignore();
-	MPI_Barrier(MPI_COMM_WORLD); // para sincronizar la finalizaci髇 de los procesos. Sincronizacion (igual a openmp)
+	MPI_Barrier(MPI_COMM_WORLD); // para sincronizar la finalizaci贸n de los procesos. Sincronizacion (igual a openmp)
 
 	MPI_Finalize();
 	return 0;
@@ -85,7 +55,7 @@ void uso(string nombre_prog) {
 }
 
 void obt_args(char* argv[], int& cant) {
-	cant = strtol(argv[1], NULL, 10); // se obtiene valor del argumento 1 pasado por "l韓ea de comandos".
+	cant = strtol(argv[1], NULL, 10); // se obtiene valor del argumento 1 pasado por "l铆nea de comandos".
 
 #  ifdef DEBUG
 	cout << "cant = " << cant << endl;
@@ -110,7 +80,7 @@ void mergeSort(int cant, vector<int>& arreglo) {
 	int mid, cnt_proc, tam, block;
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &mid); 		/* El comunicador le da valor a id (rank del proceso) */
-	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc);  /* El comunicador le da valor a p (n鷐ero de procesos) */
+	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc);  /* El comunicador le da valor a p (n煤mero de procesos) */
 
 	block = cant / cnt_proc;
 	vector<int>::iterator it;
