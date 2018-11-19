@@ -100,12 +100,13 @@ void mergeSort(int cant, vector<int>& arreglo) {
 	}
 	MPI_Gather(send, block, MPI_INT, rec, block, MPI_INT, 0, MPI_COMM_WORLD);
 
-	//merge(cant, block, arreglo, mid, rec, cnt_proc);
-	merge_v2(cant, block, cnt_proc, arreglo, mid);
+	merge(cant, block, arreglo, mid, rec, cnt_proc);
+	//merge_v2(cant, block, cnt_proc, arreglo, mid);
 }
 
 void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int cnt_proc) {
 	vector<vector<int>> vectors;
+	int i = 1;
 	int shift = quantity;
 	for (int i = 0; i < cant; i++) {
 		vector<int> temp;
@@ -118,11 +119,10 @@ void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int 
 		merge(it1, it1 + quantity, it1 + quantity, it1 + 2 * quantity, vectors[0].begin()); //Funciona correctamente
 		if (cnt_proc > 2) {
 			int* it2 = &vectors[0][0];
-			for (int i = 1; i <= quantity - 1; i++) {
-				if (!is_sorted(vectors[i - 1].begin(), vectors[i - 1].end())) {
-					merge(it2, it2 + quantity * (i + 1), it1 + quantity * (i + 1), it1 + quantity * (i + 1) + quantity, vectors[i].begin());
-					it2 = &vectors[i][0];
-				}
+			while (!is_sorted(vectors[i - 1].begin(), vectors[i - 1].end())) {
+				merge(it2, it2 + quantity * (i + 1), it1 + quantity * (i + 1), it1 + quantity * (i + 1) + quantity, vectors[i].begin());
+				it2 = &vectors[i][0];
+				++i;
 			}
 		}
 	}
@@ -164,53 +164,30 @@ void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	while (half > 1) {
-	shift *= 2;
-	if (sender(mid, cnt_proc, shift)) {
-		iSend = mid - shift;
-		for (int i = 0; i < 2 * block; i++) {
-			cout<<sendC[i] << endl;
+		shift *= 2;
+		if (sender(mid, cnt_proc, shift)) {
+			iSend = mid - shift;
+			MPI_Send(sendC, shift * block, MPI_INT, iSend, 0, MPI_COMM_WORLD);
 		}
-		MPI_Send(sendC, shift * block, MPI_INT, iSend, 0, MPI_COMM_WORLD);
-	}
-	else if (receiver(mid, cnt_proc, shift)) {
-		iRec = mid + shift;
-		MPI_Recv(rec, shift * block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		it = &sendC[0];
-		it2 = &rec[0];
-		merge(it, it + shift * block, it2, it2 + shift * block, &recC[0]);
-		for (int i = 0; i < shift * block * 2; i++) {
-			sendC[i] = recC[i];
+		else if (receiver(mid, cnt_proc, shift)) {
+			iRec = mid + shift;
+			MPI_Recv(rec, shift * block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			it = &sendC[0]; //mi parte
+			it2 = &rec[0]; //la parte que me envian
+			merge(it, it + shift * block, it2, it2 + shift * block, &recC[0]);
+			for (int i = 0; i < shift * block * 2; i++) {
+				sendC[i] = recC[i];
+			}
 		}
-	}
-	half /= 2;
+		half /= 2;
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
 	if (mid == 0) {
-		cout << "Procecso 0" << endl;
-		for (int i = 0; i < 8 * block; i++) {
+		cout << "Proceso 0" << endl;
+		for (int i = 0; i < shift * block; i++) {
 			cout << recC[i] << " " << mid <<endl;
 		}
 	}
-/*	else if (mid == 4) {
-		cout << "Procecso 4" << endl;
-	/*	for (int i = 0; i < 4 * block; i++) {
-			cout << recC[i]<< " " << mid << endl;
-		}
-	}
-	/* Una vez hecho el merge de tamaño cuatro, nos metemos a un ciclo*/
-	/* Los hilos que van a hacer el merge de cuatro ya no son tan triviales*/
-	/* Sabemos que el ultimo merge lo tiene que hacer el hilo maestro*/
-	/* En el arbol mas basico los que pasan datos son: 1, 3, 5, 7... 2, 6... 4*/
-
-	/*
-			0 1  2 3  4 5  6  7
-			\ /  \ /  \ /  \ /
-			 0    2    4    6
-			   \ /       \ /
-				0         4
-				  \     /
-					 0
-		*/
 }
 
 bool sender(int mid, int cnt_proc, int shift) {
