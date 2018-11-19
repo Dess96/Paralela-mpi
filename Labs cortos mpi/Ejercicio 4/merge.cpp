@@ -127,11 +127,7 @@ void mergeSort(int cant, vector<int>& arreglo) {
 		rec = (int*)malloc(tam * sizeof(int));;
 	}
 	MPI_Gather(send, block, MPI_INT, rec, block, MPI_INT, 0, MPI_COMM_WORLD);
-	for (int i = 0; i < tam; i++) {
-		if (mid == 0) {
-			cout << rec[i] << endl;
-		}
-	}
+
 	//merge(cant, block, arreglo, mid, rec, cnt_proc);
 	merge_v2(cant, block, cnt_proc, arreglo, mid);
 }
@@ -187,29 +183,15 @@ void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
 	else {
 		iRec = mid + shift;
 		MPI_Recv(rec, block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		it = &arreglo[mid];
+		it = &arreglo[mid*block];
 		it2 = &rec[0];
 		merge(it, it + block, it2, it2 + block, &sendC[0]);
 	}
-	if (mid == 0) {
+	if (mid == 6) {
 		cout << "Rec" << endl;
 		for (int i = 0; i < 2 * block; i++) {
 			cout << sendC[i] << endl;
 		}
+		cout << "*********************" << endl;
 	}
-
-	/* Una vez hecho el merge de tamaño cuatro, nos metemos a un ciclo*/
-	/* Los hilos que van a hacer el merge de cuatro ya no son tan triviales*/
-	/* Sabemos que el ultimo merge lo tiene que hacer el hilo maestro*/
-	/* En el arbol mas basico los que pasan datos son: 1, 3, 5, 7... 2, 6... 4*/
-
-	/*
-			0 1  2 3  4 5  6  7
-			\ /  \ /  \ /  \ /
-			 0    2    4    6
-			   \ /       \ /
-				0         4
-				  \     /
-					 0
-		*/
 }
