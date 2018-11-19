@@ -8,6 +8,36 @@ using namespace std;
 
 //#define DEBUG
 
+bool esPadre(int nivel_arbol, int process_ID, int process_num) {
+	if (process_ID == 0) return true;
+	if (nivel_arbol == 8) {
+		if (process_ID % 2 == 0) return true;
+	}
+	else if (nivel_arbol == 4) {
+		if (process_ID == process_num / 2) return true;
+	}
+	return false;
+}
+
+bool esHijo(int nivel_arbol, int process_ID, int process_num) {
+	if (process_ID == 0) return false;
+	if (nivel_arbol == 8) {
+		if (process_ID % 2 == 1) return true;
+	}
+	else if (nivel_arbol == 4) {
+		if (process_num == 8) {
+			if (process_ID == 2 || process_ID == 6) return true;
+		}
+		else if (process_num == 4) {
+			if (process_ID % 2 == 1) return true;
+		}
+	}
+	else if (nivel_arbol == 2) {
+		if (process_ID == process_num / 2) return true;
+	}
+	return false;
+}
+
 void uso(string nombre_prog);
 void obt_args(char* argv[], int& cant);
 void generate(int, vector<int>&);
@@ -140,70 +170,41 @@ void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int 
 }
 
 void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
-	int half = cnt_proc / 2;
-	int iSend, iRec, part;
 	int shift = 1;
-	int* send;
-	int* sendC = 0;
-	int* rec;
-	int* recC = 0;
-	int* it1;
-	int* it2;
-	vector<vector<int>> vectors;
-	vector<int>::iterator it;
-	send = new int[cant];
-	rec = new int[cant];
-	sendC = new int[cant];
-	recC = new int[cant];
-	for (int i = 0; i < cant; i++) {
-		vector<int> temp;
-		temp.resize(cant);
-		vectors.push_back(temp);
-	}
-	it = arreglo.begin();
-	if (mid >= half) {
-		iSend = mid - half;
-		merge(it + iSend * block, it + iSend * block + block - 1, it + iSend * block + block - 1, it + iSend * block + block, &send[0]);
+	int iSend, iRec;
+	int* send = (int*)malloc(cant * sizeof(int));
+	int* rec = (int*)malloc(cant * sizeof(int));
+	if (mid % 2 != 0) {
+		iSend = mid - shift;
+		send = &arreglo[mid*block];
 		MPI_Send(send, block, MPI_INT, iSend, 0, MPI_COMM_WORLD);
-		MPI_Barrier(MPI_COMM_WORLD); //Funciona correctamente
 	}
-
-	if (mid < half) {
-		iRec = mid + half;
-		MPI_Recv(rec, block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); //Funciona correctamente
-	//	do {
-			half /= 2;
-			if (mid < half) {
-				sendC = &rec[0];
-				iSend = mid + half;
-				MPI_Send(sendC, block, MPI_INT, iSend, 0, MPI_COMM_WORLD);
-			}
-			else {
-				it1 = &rec[0];
-				iRec = mid - half;
-				MPI_Recv(recC, block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-				it2 = &recC[0];
-				merge(it1, it1 + shift * block, it2, it2 + shift * block, vectors[mid].begin());
-				rec = &vectors[mid][0];
-				shift *= 2;
-			}
-	//	} while (half > 1);
+	else {
+		iRec = mid + shift;
+		MPI_Recv(rec, block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
-/*	if (mid == 2) {
-		cout << "Impresion desde proceso cuatro" << endl;
-		for (int i = 0; i <  2 * block; i++) {
+	if (mid == 0) {
+		cout << "Rec" << endl;
+		for (int i = 0; i < block; i++) {
 			cout << rec[i] << endl;
 		}
-	}*/
-	if (mid == 2 || mid == 3) {
-		cout << "Rec despues de ordenar" << endl;
-		for (int i = 0; i < vectors.size(); i++) {
-			for (int j = 0; j < vectors[i].size(); j++) {
-				cout << vectors[i][j] << " ";
-			}
-			cout << endl;
-		}
 	}
-	
-	
+
+	/* Los impares le mandan su parte ordenada a los hilos pares*/
+	/* La parte ordenada de cada hilo esta en su parte de arreglo*/
+	/* Ahora que los hilos pares tienen esa parte, hacen el merge de tamaño cuatro en este caso*/
+	/* Una vez hecho el merge de tamaño cuatro, nos metemos a un ciclo*/
+	/* Los hilos que van a hacer el merge de cuatro ya no son tan triviales*/
+	/* Sabemos que el ultimo merge lo tiene que hacer el hilo maestro*/
+	/* En el arbol mas basico los que pasan datos son: 1, 3, 5, 7... 2, 6... 4*/
+
+	/*
+			0 1  2 3  4 5  6  7
+			\ /  \ /  \ /  \ /
+			 0    2    4    6
+			   \ /       \ /
+				0         4
+				  \     /
+					 0
+		*/
 }
