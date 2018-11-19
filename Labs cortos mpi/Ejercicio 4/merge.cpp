@@ -170,10 +170,15 @@ void merge(int cant, int quantity, vector<int>& arreglo, int mid, int* rec, int 
 }
 
 void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
+	vector<vector<int>> vectors;
 	int shift = 1;
 	int iSend, iRec;
 	int* send = (int*)malloc(cant * sizeof(int));
 	int* rec = (int*)malloc(cant * sizeof(int));
+	int* sendC = (int*)malloc(cant * sizeof(int));
+	int* it;
+	int* it2;
+
 	if (mid % 2 != 0) {
 		iSend = mid - shift;
 		send = &arreglo[mid*block];
@@ -182,17 +187,17 @@ void merge_v2(int cant, int block, int cnt_proc, vector<int> arreglo, int mid) {
 	else {
 		iRec = mid + shift;
 		MPI_Recv(rec, block, MPI_INT, iRec, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		it = &arreglo[mid];
+		it2 = &rec[0];
+		merge(it, it + block, it2, it2 + block, &sendC[0]);
 	}
 	if (mid == 0) {
 		cout << "Rec" << endl;
-		for (int i = 0; i < block; i++) {
-			cout << rec[i] << endl;
+		for (int i = 0; i < 2 * block; i++) {
+			cout << sendC[i] << endl;
 		}
 	}
 
-	/* Los impares le mandan su parte ordenada a los hilos pares*/
-	/* La parte ordenada de cada hilo esta en su parte de arreglo*/
-	/* Ahora que los hilos pares tienen esa parte, hacen el merge de tamaño cuatro en este caso*/
 	/* Una vez hecho el merge de tamaño cuatro, nos metemos a un ciclo*/
 	/* Los hilos que van a hacer el merge de cuatro ya no son tan triviales*/
 	/* Sabemos que el ultimo merge lo tiene que hacer el hilo maestro*/
