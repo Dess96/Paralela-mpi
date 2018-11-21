@@ -4,9 +4,12 @@
 #include<mpi.h> 
 #include<random>
 #include<fstream>
+#include<vector>
+#include<list>
 
 using namespace std;
 
+/* Funciones */
 bool validateProb(double, double);
 bool validatePeople(int);
 int initialize(int, double, double, int, double, int, int, int);
@@ -14,23 +17,26 @@ int initialize(int, double, double, int, double, int, int, int);
 //int checkVec(int, int, int);
 //int movePos(int, int);
 //bool clear(int, string);
+/* Funciones */
 
 /* Variables globales */
 int world_size, death_duration, tic, thread_count, number_people;
 int healthy_people, dead_people, sick_people, inmune_people;
 double infected, infectiousness, chance_recover;
+vector<vector<list<int>>> world;
+vector<list<int>> v;
 /* Variables globales */
 
 
 int main(int argc, char * argv[]) {
-		/* Ambiente mpi */
+	/* Ambiente mpi */
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
-	MPI_Init(&argc, &argv);             		/* Arranca ambiente MPI */
-	MPI_Comm_rank(MPI_COMM_WORLD, &mid); 		/* El comunicador le da valor a id (rank del proceso) */
-	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc);  /* El comunicador le da valor a p (número de procesos) */
-		/* Ambiente mpi */
+	MPI_Init(&argc, &argv);             		
+	MPI_Comm_rank(MPI_COMM_WORLD, &mid); //El comunicador le da valor a id (rank del proceso) */
+	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc); //El comunicador le da valor a p (número de procesos) */
+	/* Ambiente mpi */
 
 	unsigned n = std::thread::hardware_concurrency(); //Saca la cantidad de nucleos en la computadora
 	int thread_countM = 2 * n;
@@ -41,6 +47,7 @@ int main(int argc, char * argv[]) {
 	double local_start, local_finish, local_elapsed, elapsed;
 	string number;
 	string name = " ";
+
 	do {
 		/* Para llevar a cabo las validaciones */
 		infectiousnessM = -1;
@@ -49,7 +56,7 @@ int main(int argc, char * argv[]) {
 
 		while (!validateProb(infectiousnessM, chance_recoverM) || !validatePeople(number_peopleM)) { //Pedir y validar datos
 			if (mid == 0) {
-				cout << "Ingrese el numero de personas en el mundo (de 0 a 10 000)" << endl;
+				cout << "Ingrese el numero de personas en el mundo (de 0 a 10000000)" << endl;
 				cin >> number_peopleM;
 				cout << "Ingrese la potencia infecciosa del mundo (decimal entre 0 y 1)" << endl;
 				cin >> infectiousnessM;
@@ -85,7 +92,7 @@ int main(int argc, char * argv[]) {
 		MPI_Reduce(&local_elapsed, &elapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
 		if (mid == 0) {
-			cout << "Tiempo transcurrido = " << elapsed - arch_time << endl;
+//			cout << "Tiempo transcurrido = " << elapsed - arch_time << endl;
 			cout << endl;
 			cout << "Desea ver otra simulacion?" << endl;
 			cout << "1. Si   2. No" << endl;
@@ -122,36 +129,33 @@ int initialize(int number_people, double infectiousness, double chance_recover, 
 	if (mid == 0) {
 		v.resize(world_size); //Vector de vectores de tamaño world_size*world_size
 		world.resize(world_size, v);
-		peopleVec.resize(number_people);
 	}
 	sick_people = 0;
 	perc = number_people * infected / 100; //Cantidad correspondiente al porcentaje dado
 	healthy = number_people - perc; //Gente sana
-	//Personas enfermas
 #pragma omp parallel for num_threads(thread_count)
 	for (int i = 0; i < perc; i++) { //Cambiamos a los infectados
-		Person p; //REPENSAR ESTADOS
-		pos1 = rd() % world_size; //REPENSAR ESTADOS
-		pos2 = rd() % world_size; //REPENSAR ESTADOS
-		p.setX(pos1); //REPENSAR ESTADOS
-		p.setY(pos2); //REPENSAR ESTADOS
-		p.setState(1); //REPENSAR ESTADOS
-		p.setSick(1); //REPENSAR ESTADOS
-#pragma omp atomic
-		world[pos1][pos2]++; //Metemos a la persona en la lista de la posicion correspondiente	
-		peopleVec[i] = p;
+		pos1 = rd() % world_size;
+		pos2 = rd() % world_size;
+		world[pos1][pos2].push_back(1);
+//		p.setSick(1); //REPENSAR TIEMPO ENFERMO
 	}
 	//Personas sanas
 #pragma omp parallel for num_threads(thread_count)
-	for (int j = perc; j < peopleVec.size(); j++) {
-		Person p;
+	for (int j = perc; j < healthy; j++) {
 		pos1 = rd() % world_size;
 		pos2 = rd() % world_size;
-		p.setX(pos1);
-		p.setY(pos2);
-#pragma omp atomic
-		world[pos1][pos2]++;
-		peopleVec[j] = p;
+		world[pos1][pos2].push_back(0);
+	}
+	list<int>::iterator it;
+	for (int i = 0; i < world_size; i++) {
+		for (int j = 0; j < world_size; j++) {
+			if (!(world[i][j].empty())) {
+				for (list<int>::iterator it = world[i][j].begin(); it != world[i][j].end(); ++it) {
+					cout << "Esta persona de estado " << *it << " estaba en la posicion x " << i << "y y " << j << endl;
+				}
+			}
+		}
 	}
 	return healthy;
 }
