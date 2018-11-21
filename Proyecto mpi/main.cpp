@@ -25,6 +25,7 @@ int healthy_people, dead_people, sick_people, inmune_people;
 double infected, infectiousness, chance_recover;
 vector<vector<list<int>>> world;
 vector<list<int>> v;
+vector<list<int*>> sick_time;
 /* Variables globales */
 
 
@@ -129,6 +130,7 @@ int initialize(int number_people, double infectiousness, double chance_recover, 
 	if (mid == 0) {
 		v.resize(world_size); //Vector de vectores de tamaño world_size*world_size
 		world.resize(world_size, v);
+		sick_time.resize(tic);
 	}
 	sick_people = 0;
 	perc = number_people * infected / 100; //Cantidad correspondiente al porcentaje dado
@@ -138,7 +140,7 @@ int initialize(int number_people, double infectiousness, double chance_recover, 
 		pos1 = rd() % world_size;
 		pos2 = rd() % world_size;
 		world[pos1][pos2].push_back(1);
-//		p.setSick(1); //REPENSAR TIEMPO ENFERMO
+		sick_time[0].push_back(&(world[pos1][pos2].back())); //Metemos la direccion de la "persona" para poder modificarla posteriormente
 	}
 	//Personas sanas
 #pragma omp parallel for num_threads(thread_count)
@@ -147,14 +149,24 @@ int initialize(int number_people, double infectiousness, double chance_recover, 
 		pos2 = rd() % world_size;
 		world[pos1][pos2].push_back(0);
 	}
-	list<int>::iterator it;
-	for (int i = 0; i < world_size; i++) {
+/*	for (int i = 0; i < world_size; i++) {
 		for (int j = 0; j < world_size; j++) {
 			if (!(world[i][j].empty())) {
 				for (list<int>::iterator it = world[i][j].begin(); it != world[i][j].end(); ++it) {
 					cout << "Esta persona de estado " << *it << " estaba en la posicion x " << i << "y y " << j << endl;
 				}
 			}
+		}
+	}*/
+	for (int i = 0; i < tic; i++) {
+		for (list<int*>::iterator it = sick_time[i].begin(); it != sick_time[i].end(); ++it) {
+			cout << "Esta persona de estado " << **it << " estaba en la posicion x " << i<< endl;
+			**it = 2;
+		}
+	}
+	for (int i = 0; i < tic; i++) {
+		for (list<int*>::iterator it = sick_time[i].begin(); it != sick_time[i].end(); ++it) {
+			cout << "Esta persona de estado " << **it << " estaba en la posicion x " << i << endl;
 		}
 	}
 	return healthy;
