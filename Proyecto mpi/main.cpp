@@ -23,9 +23,8 @@ int initialize(int, double, double, int, double, int, int, int);
 int world_size, death_duration, tic, thread_count, number_people;
 int healthy_people, dead_people, sick_people, inmune_people;
 double infected, infectiousness, chance_recover;
-vector<vector<list<int>>> world;
-vector<list<int>> v;
-vector<list<int*>> sick_time;
+int** world; //Tiene las personas en si con sus cuatro atributos
+int** num_sick; //Numero enfermos en x y y
 /* Variables globales */
 
 
@@ -34,10 +33,10 @@ int main(int argc, char * argv[]) {
 	int mid; // id de cada proceso
 	int cnt_proc; // cantidad de procesos
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
-	MPI_Init(&argc, &argv);             		
+	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &mid); //El comunicador le da valor a id (rank del proceso) */
 	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc); //El comunicador le da valor a p (número de procesos) */
-	/* Ambiente mpi */
+											  /* Ambiente mpi */
 
 	unsigned n = std::thread::hardware_concurrency(); //Saca la cantidad de nucleos en la computadora
 	int thread_countM = 2 * n;
@@ -86,14 +85,14 @@ int main(int argc, char * argv[]) {
 		local_start = MPI_Wtime();
 
 		healthy_people = initialize(number_peopleM, infectiousnessM, chance_recoverM, death_durationM, infectedM, world_sizeM, ticM, thread_countM); //Metodo inicializador
-//		arch_time = update(name, healthy_people); //Metodo que actualiza el mundo por tic
+		 //		arch_time = update(name, healthy_people); //Metodo que actualiza el mundo por tic
 
 		local_finish = MPI_Wtime();
 		local_elapsed = local_finish - local_start;
 		MPI_Reduce(&local_elapsed, &elapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
 		if (mid == 0) {
-//			cout << "Tiempo transcurrido = " << elapsed - arch_time << endl;
+			//			cout << "Tiempo transcurrido = " << elapsed - arch_time << endl;
 			cout << endl;
 			cout << "Desea ver otra simulacion?" << endl;
 			cout << "1. Si   2. No" << endl;
@@ -119,6 +118,11 @@ bool validatePeople(int number_people) {
 	return number_people >= 0 && number_people <= 10000000;
 }
 
+/*En la matriz world 
+/* 0: Posicion x
+/* 1: Posicion y
+/* 2: Estado
+/* 3: Tiempo enfermo*/
 int initialize(int number_people, double infectiousness, double chance_recover, int death_duration, double infected, int world_size, int tic, int thread_count) {
 	int mid;
 	MPI_Comm_rank(MPI_COMM_WORLD, &mid); /* El comunicador le da valor a id (rank del proceso) */
@@ -128,47 +132,48 @@ int initialize(int number_people, double infectiousness, double chance_recover, 
 	int pos1, pos2;
 
 	if (mid == 0) {
-		v.resize(world_size); //Vector de vectores de tamaño world_size*world_size
-		world.resize(world_size, v);
-		sick_time.resize(tic);
+		world = new int*[number_people];
+		for (int i = 0; i < number_people; ++i) {
+			world[i] = new int[4];
+		}
+
+		num_sick = new int*[world_size]();
+		for (int i = 0; i < world_size; i++) {
+			num_sick[i] = new int[world_size]();
+		}
 	}
 	sick_people = 0;
 	perc = number_people * infected / 100; //Cantidad correspondiente al porcentaje dado
 	healthy = number_people - perc; //Gente sana
-#pragma omp parallel for num_threads(thread_count)
+	cout << healthy << endl;
+	//Personas sanas
 	for (int i = 0; i < perc; i++) { //Cambiamos a los infectados
 		pos1 = rd() % world_size;
 		pos2 = rd() % world_size;
-		world[pos1][pos2].push_back(1);
-		sick_time[0].push_back(&(world[pos1][pos2].back())); //Metemos la direccion de la "persona" para poder modificarla posteriormente
+		world[i][0] = pos1;
+		world[i][1] = pos2;
+		world[i][2] = 1;
+		world[i][3] = 1;
+		num_sick[pos1][pos2]++;
 	}
-	//Personas sanas
-#pragma omp parallel for num_threads(thread_count)
-	for (int j = perc; j < healthy; j++) {
+	for (int j = perc; j <= healthy; j++) {
 		pos1 = rd() % world_size;
 		pos2 = rd() % world_size;
-		world[pos1][pos2].push_back(0);
+		world[j][0] = pos1;
+		world[j][1] = pos2;
+		world[j][2] = 0;
+		world[j][3] = 0;
+	}
+	
+	
+	for (int i = 0; i < number_people; i++) {
+		cout << "La persona en la posicion x " << world[i][0] << " y y " << world[i][1] << " tiene estado " << world[i][2] << " lleva " << world[i][3] << " tiempo enfermo " << endl;
 	}
 /*	for (int i = 0; i < world_size; i++) {
 		for (int j = 0; j < world_size; j++) {
-			if (!(world[i][j].empty())) {
-				for (list<int>::iterator it = world[i][j].begin(); it != world[i][j].end(); ++it) {
-					cout << "Esta persona de estado " << *it << " estaba en la posicion x " << i << "y y " << j << endl;
-				}
-			}
+			cout << num_sick[i][j] << endl;
 		}
 	}*/
-	for (int i = 0; i < tic; i++) {
-		for (list<int*>::iterator it = sick_time[i].begin(); it != sick_time[i].end(); ++it) {
-			cout << "Esta persona de estado " << **it << " estaba en la posicion x " << i<< endl;
-			**it = 2;
-		}
-	}
-	for (int i = 0; i < tic; i++) {
-		for (list<int*>::iterator it = sick_time[i].begin(); it != sick_time[i].end(); ++it) {
-			cout << "Esta persona de estado " << **it << " estaba en la posicion x " << i << endl;
-		}
-	}
 	return healthy;
 }
 
