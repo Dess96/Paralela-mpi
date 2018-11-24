@@ -4,8 +4,6 @@
 #include<mpi.h> 
 #include<random>
 #include<fstream>
-#include<vector>
-#include<list>
 
 using namespace std;
 
@@ -35,9 +33,9 @@ int main(int argc, char * argv[]) {
 	MPI_Status mpi_status; // para capturar estado al finalizar invocación de funciones MPI
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &mid); //El comunicador le da valor a id (rank del proceso) */
-	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc); //El comunicador le da valor a p (número de procesos) */
-											  /* Ambiente mpi */
+	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc); //El comunicador le da valor a p (número de procesos) 
 
+ /* Ambiente mpi */
 	unsigned n = std::thread::hardware_concurrency(); //Saca la cantidad de nucleos en la computadora
 	int thread_countM = 2 * n;
 	int new_sim = 1;
@@ -118,7 +116,7 @@ bool validatePeople(int number_people) {
 	return number_people >= 0 && number_people <= 10000000;
 }
 
-/*En la matriz world 
+/*En la matriz world
 /* 0: Posicion x
 /* 1: Posicion y
 /* 2: Estado
@@ -145,7 +143,6 @@ int initialize(int number_people, double infectiousness, double chance_recover, 
 	sick_people = 0;
 	perc = number_people * infected / 100; //Cantidad correspondiente al porcentaje dado
 	healthy = number_people - perc; //Gente sana
-	cout << healthy << endl;
 	//Personas sanas
 	for (int i = 0; i < perc; i++) { //Cambiamos a los infectados
 		pos1 = rd() % world_size;
@@ -156,7 +153,7 @@ int initialize(int number_people, double infectiousness, double chance_recover, 
 		world[i][3] = 1;
 		num_sick[pos1][pos2]++;
 	}
-	for (int j = perc; j <= healthy; j++) {
+	for (int j = perc; j < number_people; j++) {
 		pos1 = rd() % world_size;
 		pos2 = rd() % world_size;
 		world[j][0] = pos1;
@@ -164,16 +161,16 @@ int initialize(int number_people, double infectiousness, double chance_recover, 
 		world[j][2] = 0;
 		world[j][3] = 0;
 	}
-	
-	
+
+
 	for (int i = 0; i < number_people; i++) {
 		cout << "La persona en la posicion x " << world[i][0] << " y y " << world[i][1] << " tiene estado " << world[i][2] << " lleva " << world[i][3] << " tiempo enfermo " << endl;
 	}
-/*	for (int i = 0; i < world_size; i++) {
-		for (int j = 0; j < world_size; j++) {
-			cout << num_sick[i][j] << endl;
-		}
-	}*/
+	/*	for (int i = 0; i < world_size; i++) {
+			for (int j = 0; j < world_size; j++) {
+				cout << num_sick[i][j] << endl;
+			}
+		}*/
 	return healthy;
 }
 
