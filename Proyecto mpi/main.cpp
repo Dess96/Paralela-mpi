@@ -12,7 +12,9 @@ using namespace std;
 /* Funciones */
 void obt_args(char* argv[], int&, double&, double&, int&, int&, int&, int&);
 int initialize(int, double, int, int, int, int*&, int*&);
-double update(string, int, int, int, int, int, double, double, int*&, int*&);
+double update(string, int, int, int, int, int, double, double, int*&, int, int);
+void fill_mat(int, int*, int**&);
+void clear_mat(int**&, int);
 int movePos(int, int);
 bool write(int, string);
 /* Funciones */
@@ -48,7 +50,7 @@ int main(int argc, char * argv[]) {
 		name.append(".txt");
 	}
 	healthy_people = initialize(number_people, infected, world_size, mid, cnt_proc, world, num_sick); //Metodo inicializador
-	arch_time = update(name, healthy_people, mid, cnt_proc, number_people, death_duration, infectiousness, chance_recover, world, num_sick); //Metodo que actualiza el mundo por tic
+	arch_time = update(name, healthy_people, mid, cnt_proc, number_people, death_duration, infectiousness, chance_recover, world, tic, world_size); //Metodo que actualiza el mundo por tic
 	if (mid == 0) {
 		cout << endl;
 		cout << "Desea ver otra simulacion?" << endl;
@@ -83,14 +85,14 @@ int initialize(int number_people, double infected, int world_size, int mid, int 
 	random_device rd;
 	int perc, healthy, pos1, pos2, block1;
 
-	world = new int[number_people*4 / cnt_proc];
+	world = new int[number_people * 4 / cnt_proc];
 	num_sick = new int[number_people / cnt_proc]();
 
 	perc = number_people * infected / 100; //Cantidad correspondiente al porcentaje dado
 	healthy = number_people - perc; //Gente sana
 	block1 = number_people / cnt_proc;
 
-	for (int i = mid * block1; i < mid * block1 + block1; i ++) { //Cambiamos a los infectados
+	for (int i = mid * block1; i < mid * block1 + block1; i++) { //Cambiamos a los infectados
 		if (i < perc) {
 			pos1 = rd() % world_size;
 			pos2 = rd() % world_size;
@@ -104,9 +106,9 @@ int initialize(int number_people, double infected, int world_size, int mid, int 
 			pos1 = rd() % world_size;
 			pos2 = rd() % world_size;
 			world[4 * i] = pos1;
-			world[4 * i+1] = pos2;
-			world[4 * i+2] = 0;
-			world[4 * i+3] = 0;
+			world[4 * i + 1] = pos2;
+			world[4 * i + 2] = 0;
+			world[4 * i + 3] = 0;
 		}
 	}
 	return healthy;
@@ -117,79 +119,62 @@ int initialize(int number_people, double infected, int world_size, int mid, int 
 /* 1: Persona enferma
 /* 2: Persona inmune
 /* 3: Persona muerta*/
-double update(string name, int healthy, int mid, int cnt_proc, int number_people, int death_duration, double infectiousness, double chance_recover, int*& world, int*& num_sick) {
-	bool isSick = false;
+double update(string name, int healthy, int mid, int cnt_proc, int number_people, int death_duration, double infectiousness, double chance_recover, int*& world, int tic, int world_size) {
+	int* rec;
+	int** num_sick;
+	int actual_tic = 1;
+	int sick, x, y, state, sick_time, healthy_people, sick_people, dead_people, inmune_people;
+	int block1 = number_people / cnt_proc;
 	double prob_rec, prob_infect;
-	int healthy_people, sick_people, inmune_people, dead_people, x, y, state, sick_time, sick, block1;
-	int* rec_sick;
-
+	bool stable = false;
+	random_device generator;
+	uniform_real_distribution<double> distribution(0.0, 1.0);
 	healthy_people = healthy;
 	sick_people = number_people - healthy; //Los enfermos son el resto
 	dead_people = inmune_people = 0;
-	random_device generator;
-	uniform_real_distribution<double> distribution(0.0, 1.0);
-	block1 = number_people / cnt_proc;
-	rec_sick = new int[block1*cnt_proc]();
+	if (mid == 0) {
+		num_sick = new int*[world_size]();
+		for (int i = 0; i < world_size; i++) {
+			num_sick[i] = new int[world_size]();
+		}
+	}
+	rec = new int[number_people * 4];
 
-	MPI_Allgather(num_sick, block1, MPI_INT, rec_sick, block1, MPI_INT, MPI_COMM_WORLD);
-	for (int i = mid * block1; i < mid * block1 + block1; i++) {
-		sick = 0;
-		x = world[4 * i];
-		y = world[4 * i+1];
-		state = world[4 * i+2];
-		if (state == 1) {
-			sick_time = world[4 * i + 3];
-			if (sick_time >= death_duration) {
-				prob_rec = distribution(generator); //Decidimos si la persona se enferma o se hace inmune
-				if (prob_rec < chance_recover) {
-					world[4 * i + 2] = 2;
-					rec_sick[i]--;
-					if (mid == 0) {
-						sick_people--;
-						inmune_people++;
+	do {
+		MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD);
+//		fill_mat(number_people, rec, num_sick);
+		for (int i = mid * block1; i < mid * block1 + block1; i++) {
+			sick = 0;
+			x = world[4 * i];
+			y = world[4 * i + 1];
+			state = world[4 * i + 2];
+			if (state == 1) {
+				sick_time = world[4 * i + 3];
+				if (sick_time >= death_duration) {
+					prob_rec = distribution(generator); //Decidimos si la persona se enferma o se hace inmune
+					if (prob_rec < chance_recover) {
+						world[4 * i + 2] = 2;
+					}
+					else {
+						world[4 * i + 2] = 3;
 					}
 				}
-				else {
-					world[4 * i + 2] = 3;
-					rec_sick[i]--;
-					if (mid == 0) {
-						sick_people--;
-						dead_people++;
+				else { //Si todavia no le toca, aumentamos el tiempo que lleva enferma
+					world[4 * i + 3];
+				}
+			} else if (state == 0) {
+				for (int j = 0; j < sick; j++) { //Hacemos un for por cada enfermo en la misma posicion de la persona
+					prob_infect = distribution(generator);
+					if (prob_infect < infectiousness) {
+						world[4 * i + 2] = 1;
+						world[4 * i + 3] = 1;
 					}
 				}
 			}
-			else { //Si todavia no le toca, aumentamos el tiempo que lleva enferma
-				world[4 * i + 3];
-			}
 		}
-		else if (state == 0) {
-			sick = rec_sick[i];
-			for (int j = 0; j < sick; j++) { //Hacemos un for por cada enfermo en la misma posicion de la persona
-				prob_infect = distribution(generator);
-				if (prob_infect < infectiousness) {
-					isSick = 1;
-				}
-			}
-			if (isSick) { //Si la persona se enfermo, cambiamos su estado y empezamos el conteo de tics
-				world[4 * i + 2] = 1;
-				rec_sick[i]++;
-				if (mid == 0) {
-					healthy_people--;
-					sick_people++;
-				}
-			}
-			isSick = 0;
-		}
-	}
-	if (mid == 0) {
-		cout << sick_people << endl;
-		cout << dead_people << endl;
-	}
-	if (mid == 0) {
-		cout << std::endl;
-		cout << "Archivo generado" << endl;
-	}
-	dead_people = sick_people = healthy_people = inmune_people = 0;
+		cout << "do" << endl;
+		actual_tic++;
+	} while (!stable && (actual_tic <= tic));
 	return 0;
 }
 
@@ -241,3 +226,23 @@ int movePos(int pos, int world_size) {
 //	}
 //	return stable;
 //}
+
+void fill_mat(int number_people, int* rec, int**& num_sick) {
+	int x, y, state;
+	for (int i = 0; i < number_people; i++) {
+		x = rec[4 * i];
+		y = rec[4 * i + 1];
+		state = rec[4 * i + 2];
+		if (state == 1) {
+			num_sick[x][y]++;
+		}
+	}
+}
+
+void clear_mat(int**& num_sick, int world_size) {
+	for (int i = 0; i < world_size; i++) {
+		for (int j = 0; i < world_size; j++) {
+			num_sick[i][j] = 0;
+		}
+	}
+}
