@@ -7,9 +7,11 @@
 
 using namespace std;
 
+#define DEBUG
+
 /* Funciones */
 void obt_args(char* argv[], int&, double&, double&, int&, int&, int&, int&);
-int initialize(int, double, int);
+int initialize(int, double, int, int, int);
 double update(string, int);
 int movePos(int, int);
 bool write(int, string);
@@ -17,8 +19,6 @@ bool write(int, string);
 
 /* Variables globales */
 int healthy_people, dead_people, sick_people, inmune_people;
-int** world; //Tiene las personas en si con sus cuatro atributos
-int** num_sick; //Numero enfermos en x y y
 /* Variables globales */
 
 
@@ -29,6 +29,12 @@ int main(int argc, char * argv[]) {
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &mid); //El comunicador le da valor a id (rank del proceso) */
 	MPI_Comm_size(MPI_COMM_WORLD, &cnt_proc); //El comunicador le da valor a p (número de procesos) 
+
+#  ifdef DEBUG 
+	if (mid == 0)
+		cin.ignore();
+	MPI_Barrier(MPI_COMM_WORLD);
+#  endif
 
 	int world_size, death_duration, tic, number_people, infected;
 	int new_sim = 1;
@@ -44,7 +50,7 @@ int main(int argc, char * argv[]) {
 		name.append(number);
 		name.append(".txt");
 	}
-	healthy_people = initialize(number_people, infected, world_size); //Metodo inicializador
+	healthy_people = initialize(number_people, infected, world_size, mid, cnt_proc); //Metodo inicializador
 	//arch_time = update(name, healthy_people); //Metodo que actualiza el mundo por tic
 	if (mid == 0) {
 		cout << endl;
@@ -52,8 +58,6 @@ int main(int argc, char * argv[]) {
 		cout << "1. Si   2. No" << endl;
 		cin >> new_sim;
 	}
-	sims++;
-	name = " ";
 
 	if (mid == 0)
 		cin.ignore();
@@ -78,30 +82,27 @@ void obt_args(char* argv[], int& number_people, double& infectiousness, double& 
 /* 1: Posicion y
 /* 2: Estado
 /* 3: Tiempo enfermo*/
-int initialize(int number_people, double infected, int world_size) {
-	int mid;
-	MPI_Comm_rank(MPI_COMM_WORLD, &mid); /* El comunicador le da valor a id (rank del proceso) */
+int initialize(int number_people, double infected, int world_size, int mid, int cnt_proc) {
 	random_device rd;
-	int perc;
-	int healthy = 0;
-	int pos1, pos2;
+	int perc, healthy, pos1, pos2, block1;
+	int** world = 0;
+	int** num_sick = 0;
+	int l, k;
 
-/*	if (mid == 0) {
-		world = new int*[number_people];
-		for (int i = 0; i < number_people; ++i) {
-			world[i] = new int[4];
-		}
-
-		num_sick = new int*[world_size]();
-		for (int i = 0; i < world_size; i++) {
-			num_sick[i] = new int[world_size]();
-		}
+	world = new int*[number_people];
+	for (int i = 0; i < number_people; ++i) {
+		world[i] = new int[4];
 	}
-	sick_people = 0;
+
+	num_sick = new int*[world_size]();
+	for (int i = 0; i < world_size; i++) {
+		num_sick[i] = new int[world_size]();
+	}
+
 	perc = number_people * infected / 100; //Cantidad correspondiente al porcentaje dado
 	healthy = number_people - perc; //Gente sana
-	//Personas sanas
-	for (int i = 0; i < perc; i++) { //Cambiamos a los infectados
+	block1 = perc / cnt_proc;
+	for (int i = mid * block1; i < mid * block1 + block1; i++) { //Cambiamos a los infectados
 		pos1 = rd() % world_size;
 		pos2 = rd() % world_size;
 		world[i][0] = pos1;
@@ -110,15 +111,16 @@ int initialize(int number_people, double infected, int world_size) {
 		world[i][3] = 1;
 		num_sick[pos1][pos2]++;
 	}
-	for (int j = perc; j < number_people; j++) {
+
+	for (int j = mid * block1 + perc; j < mid * block1 + block1 + perc; j++) {
 		pos1 = rd() % world_size;
 		pos2 = rd() % world_size;
 		world[j][0] = pos1;
 		world[j][1] = pos2;
 		world[j][2] = 0;
 		world[j][3] = 0;
-	}*/
-	return healthy;
+	}
+	return 0;
 }
 
 //double update(string name, int healthy) {
