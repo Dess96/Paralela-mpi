@@ -122,12 +122,15 @@ double update(string name, int healthy, int mid, int cnt_proc, int number_people
 	double prob_rec, prob_infect;
 	int healthy_people, sick_people, inmune_people, dead_people, x, y, state, sick_time, sick, block1;
 	int* rec_sick;
+
 	healthy_people = healthy;
 	sick_people = number_people - healthy; //Los enfermos son el resto
+	dead_people = inmune_people = 0;
 	random_device generator;
 	uniform_real_distribution<double> distribution(0.0, 1.0);
 	block1 = number_people / cnt_proc;
-	rec_sick = new int[block1*cnt_proc];
+	rec_sick = new int[block1*cnt_proc]();
+
 	MPI_Allgather(num_sick, block1, MPI_INT, rec_sick, block1, MPI_INT, MPI_COMM_WORLD);
 	for (int i = mid * block1; i < mid * block1 + block1; i++) {
 		sick = 0;
@@ -140,11 +143,19 @@ double update(string name, int healthy, int mid, int cnt_proc, int number_people
 				prob_rec = distribution(generator); //Decidimos si la persona se enferma o se hace inmune
 				if (prob_rec < chance_recover) {
 					world[4 * i + 2] = 2;
-					//num_sick[x][y]--;
+					rec_sick[i]--;
+					if (mid == 0) {
+						sick_people--;
+						inmune_people++;
+					}
 				}
 				else {
 					world[4 * i + 2] = 3;
-					//num_sick[x][y]--;
+					rec_sick[i]--;
+					if (mid == 0) {
+						sick_people--;
+						dead_people++;
+					}
 				}
 			}
 			else { //Si todavia no le toca, aumentamos el tiempo que lleva enferma
@@ -152,9 +163,27 @@ double update(string name, int healthy, int mid, int cnt_proc, int number_people
 			}
 		}
 		else if (state == 0) {
-	/*		cout << "Hay alguien sano " << c <<endl;
-			c++;*/
+			sick = rec_sick[i];
+			for (int j = 0; j < sick; j++) { //Hacemos un for por cada enfermo en la misma posicion de la persona
+				prob_infect = distribution(generator);
+				if (prob_infect < infectiousness) {
+					isSick = 1;
+				}
+			}
+			if (isSick) { //Si la persona se enfermo, cambiamos su estado y empezamos el conteo de tics
+				world[4 * i + 2] = 1;
+				rec_sick[i]++;
+				if (mid == 0) {
+					healthy_people--;
+					sick_people++;
+				}
+			}
+			isSick = 0;
 		}
+	}
+	if (mid == 0) {
+		cout << sick_people << endl;
+		cout << dead_people << endl;
 	}
 	if (mid == 0) {
 		cout << std::endl;
