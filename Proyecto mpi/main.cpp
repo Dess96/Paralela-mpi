@@ -11,10 +11,8 @@ using namespace std;
 
 /* Funciones */
 void obt_args(char* argv[], int&, double&, double&, int&, int&, int&, int&);
-int initialize(int, double, int, int, int, int*&, int*&);
+int initialize(int, double, int, int, int, int*&);
 double update(string, int, int, int, int, int, double, double, int*&, int, int);
-void fill_mat(int, int*, int**&);
-void clear_mat(int**, int);
 int movePos(int, int);
 bool write(int, string);
 /* Funciones */
@@ -34,7 +32,6 @@ int main(int argc, char * argv[]) {
 #  endif
 
 	int* world = 0;
-	int* num_sick = 0;
 	int world_size, death_duration, tic, number_people, infected, healthy_people;
 	int new_sim = 1;
 	int sims = 1;
@@ -49,7 +46,7 @@ int main(int argc, char * argv[]) {
 		name.append(number);
 		name.append(".txt");
 	}
-	healthy_people = initialize(number_people, infected, world_size, mid, cnt_proc, world, num_sick); //Metodo inicializador
+	healthy_people = initialize(number_people, infected, world_size, mid, cnt_proc, world); //Metodo inicializador
 	arch_time = update(name, healthy_people, mid, cnt_proc, number_people, death_duration, infectiousness, chance_recover, world, tic, world_size); //Metodo que actualiza el mundo por tic
 	if (mid == 0) {
 		cout << endl;
@@ -81,12 +78,11 @@ void obt_args(char* argv[], int& number_people, double& infectiousness, double& 
 /* 1: Posicion y
 /* 2: Estado
 /* 3: Tiempo enfermo*/
-int initialize(int number_people, double infected, int world_size, int mid, int cnt_proc, int*& world, int*& num_sick) {
+int initialize(int number_people, double infected, int world_size, int mid, int cnt_proc, int*& world) {
 	random_device rd;
 	int perc, healthy, pos1, pos2, block1;
 
 	world = new int[number_people * 4 / cnt_proc];
-	num_sick = new int[number_people / cnt_proc]();
 
 	perc = number_people * infected / 100; //Cantidad correspondiente al porcentaje dado
 	healthy = number_people - perc; //Gente sana
@@ -100,7 +96,6 @@ int initialize(int number_people, double infected, int world_size, int mid, int 
 			world[4 * i + 1] = pos2;
 			world[4 * i + 2] = 1;
 			world[4 * i + 3] = 1;
-			num_sick[i]++;
 		}
 		else {
 			pos1 = rd() % world_size;
@@ -121,7 +116,6 @@ int initialize(int number_people, double infected, int world_size, int mid, int 
 /* 3: Persona muerta*/
 double update(string name, int healthy, int mid, int cnt_proc, int number_people, int death_duration, double infectiousness, double chance_recover, int*& world, int tic, int world_size) {
 	int* rec;
-	int** num_sick;
 	int actual_tic = 1;
 	int sick, x, y, state, sick_time, healthy_people, sick_people, dead_people, inmune_people;
 	int block1 = number_people / cnt_proc;
@@ -132,17 +126,11 @@ double update(string name, int healthy, int mid, int cnt_proc, int number_people
 	healthy_people = healthy;
 	sick_people = number_people - healthy; //Los enfermos son el resto
 	dead_people = inmune_people = 0;
-	if (mid == 0) {
-		num_sick = new int*[world_size]();
-		for (int i = 0; i < world_size; i++) {
-			num_sick[i] = new int[world_size]();
-		}
-	}
 	rec = new int[number_people * 4];
 
 	do {
 		MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD);
-		fill_mat(number_people, rec, num_sick);
+	//	fill_mat(number_people, rec, num_sick);
 		for (int i = mid * block1; i < mid * block1 + block1; i++) {
 			sick = 0;
 			x = world[4 * i];
@@ -172,7 +160,6 @@ double update(string name, int healthy, int mid, int cnt_proc, int number_people
 				}
 			}
 		}
-		//clear_mat(num_sick, world_size);
 		cout << "do" << endl;
 		actual_tic++;
 	} while (!stable && (actual_tic <= tic));
