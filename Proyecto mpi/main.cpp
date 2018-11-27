@@ -113,6 +113,12 @@ int initialize(int number_people, double infected, int world_size, int mid, int 
 			world[4 * i+3] = 0;
 		}
 	}
+	if (mid == 0) {
+		cout << "Matriz inicializar" << endl;
+		for (int i = mid * block1; i < mid * block1 + block1; i++) {
+			cout << world[4 * i] << " " << world[4 * i + 1] << " " << world[4 * i + 2] << " " << world[4 * i + 3] << " " << endl;
+		}
+	}
 	return healthy;
 }
 
@@ -137,15 +143,33 @@ double update(string name, int healthy, int mid, int cnt_proc, int number_people
 		y = world[4 * i+1];
 		state = world[4 * i+2];
 		if (state == 1) {
-			cout << "Hay alguien enfermo " << c << endl;
-			c++;
+			sick_time = world[4 * i + 3];
+			if (sick_time >= death_duration) {
+				prob_rec = distribution(generator); //Decidimos si la persona se enferma o se hace inmune
+				if (prob_rec < chance_recover) {
+					world[4 * i + 2] = 2;
+					num_sick[x][y]--;
+				}
+				else {
+					world[4 * i + 2] = 3;
+					num_sick[x][y]--;
+				}
+			}
+			else { //Si todavia no le toca, aumentamos el tiempo que lleva enferma
+				world[4 * i + 3];
+			}
 		}
 		else if (state == 0) {
-			cout << "Hay alguien sano " << c <<endl;
-			c++;
+	/*		cout << "Hay alguien sano " << c <<endl;
+			c++;*/
 		}
 	}
-
+	if (mid == 0) {
+		cout << "Matriz update" << endl;
+		for (int i = mid * block1; i < mid * block1 + block1; i++) {
+			cout << world[4 * i] << " " << world[4 * i + 1] << " " << world[4 * i + 2] << " " << world[4 * i + 3] << " " << endl;
+		}
+	}
 	if (mid == 0) {
 		cout << std::endl;
 		cout << "Archivo generado" << endl;
