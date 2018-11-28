@@ -49,7 +49,12 @@ int main(int argc, char * argv[]) {
 	uniform_real_distribution<double> distribution(0.0, 1.0);
 
 	obt_args(argv, number_people, infectiousness, chance_recover, death_duration, infected, world_size, tic);
-
+	if (mid == 0) {
+		name = "report_"; //Nos encargamos de crear el nombre del futuro archivo por simulacion
+		number = to_string(sims);
+		name.append(number);
+		name.append(".txt");
+	}
 	/* Matriz con enfermos y arreglo con personas y sus atributos*/
 	num_sick = new int*[world_size];
 	for (int i = 0; i < world_size; i++) {
@@ -135,17 +140,10 @@ int main(int argc, char * argv[]) {
 			}
 		}
 		cout << "do" << endl;
-//		stable = write(actual_tic, name, healthy_people, dead_people, sick_people, inmune_people, number_people, world, world_size, mid, cnt_proc);
+		stable = write(actual_tic, name, healthy_people, dead_people, sick_people, inmune_people, number_people, world, world_size, mid, cnt_proc);
 		clear_mat(world_size, num_sick);
 		actual_tic++;
 	} while (!stable && (actual_tic <= tic));
-
-	if (mid == 0) {
-		name = "report_"; //Nos encargamos de crear el nombre del futuro archivo por simulacion
-		number = to_string(sims);
-		name.append(number);
-		name.append(".txt");
-	}
 	/* Actualizaciones por tic */
 
 	if (mid == 0) {
@@ -192,9 +190,9 @@ bool write(int actual_tic, string name, int healthy_people, int dead_people, int
 	int x, y, pos1, pos2;
 	int block1 = number_people / cnt_proc;
 	bool stable = 0;
-	ofstream file;
-	file.open(name, ios_base::app);
 	if (mid == 0) {
+		ofstream file;
+		file.open(name, ios_base::app);
 		file << "Reporte del tic " << actual_tic << endl
 			<< " Personas muertas total " << dead_people << ", promedio " << dead_people / actual_tic << ", porcentaje " << number_people * dead_people / 100 << endl
 			<< " Personas sanas total " << healthy_people << ", promedio " << healthy_people / actual_tic << ", porcentaje " << number_people * healthy_people / 100 << endl
