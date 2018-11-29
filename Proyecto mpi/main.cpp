@@ -79,18 +79,18 @@ int main(int argc, char * argv[]) {
 		if (i < perc) {
 			pos1 = rd() % world_size;
 			pos2 = rd() % world_size;
-			world[4 * i] = pos1;
-			world[4 * i + 1] = pos2;
-			world[4 * i + 2] = 1;
-			world[4 * i + 3] = 1;
+			///world[4 * i] = pos1;
+			///world[4 * i + 1] = pos2;
+			///world[4 * i + 2] = 1;
+			///world[4 * i + 3] = 1;
 		}
 		else {
 			pos1 = rd() % world_size;
 			pos2 = rd() % world_size;
-			world[4 * i] = pos1;
-			world[4 * i + 1] = pos2;
-			world[4 * i + 2] = 0;
-			world[4 * i + 3] = 0;
+			///world[4 * i] = pos1;
+			///world[4 * i + 1] = pos2;
+			///world[4 * i + 2] = 0;
+			///world[4 * i + 3] = 0;
 		}
 	}
 	/* Inicializacion */
@@ -121,7 +121,7 @@ int main(int argc, char * argv[]) {
 				}
 			}
 			else if (state == 0) {
-				sick = num_sick[x][y];
+				///sick = num_sick[x][y];
 				for (int j = 0; j < sick; j++) { //Hacemos un for por cada enfermo en la misma posicion de la persona
 					prob_infect = distribution(generator);
 					if (prob_infect < infectiousness) {
@@ -143,9 +143,6 @@ int main(int argc, char * argv[]) {
 		cout << "1. Si   2. No" << endl;
 		cin >> new_sim;
 	}
-
-	if (mid == 0)
-		cin.ignore();
 	MPI_Barrier(MPI_COMM_WORLD); // para sincronizar la finalización de los procesos
 	MPI_Finalize();
 
@@ -183,7 +180,6 @@ bool write(int actual_tic, string name, int number_people, int* world, int world
 	int sick_people = rec_var[1];
 	int inmune_people = rec_var[2];
 	int dead_people = rec_var[3];
-	int block1 = number_people / cnt_proc;
 	bool stable = 0;
 	if (mid == 0) {
 		ofstream file;
@@ -201,7 +197,7 @@ bool write(int actual_tic, string name, int number_people, int* world, int world
 		stable = 1;
 	}
 	else {
-		for (int i = mid * block1; i < mid * block1 + block1; i++) { //Volvemos a llenar la matriz despues de haber procesado a todos en el tic anterior
+		for (int i = 0; i < number_people; i++) { //Volvemos a llenar la matriz despues de haber procesado a todos en el tic anterior
 			x = world[4 * i];
 			y = world[4 * i + 1];
 			pos1 = movePos(x, world_size);
