@@ -75,22 +75,22 @@ int main(int argc, char * argv[]) {
 	healthy = number_people - perc; //Gente sana
 	block1 = number_people / cnt_proc;
 
-	for (int i = mid * block1; i < mid * block1 + block1; i++) { //Cambiamos a los infectados
+	for (int i = 0; i < block1; i++) { //Cambiamos a los infectados
 		if (i < perc) {
 			pos1 = rd() % world_size;
 			pos2 = rd() % world_size;
-			///world[4 * i] = pos1;
-			///world[4 * i + 1] = pos2;
-			///world[4 * i + 2] = 1;
-			///world[4 * i + 3] = 1;
+			world[4 * i] = pos1;
+			world[4 * i + 1] = pos2;
+			world[4 * i + 2] = 1;
+			world[4 * i + 3] = 1;
 		}
 		else {
 			pos1 = rd() % world_size;
 			pos2 = rd() % world_size;
-			///world[4 * i] = pos1;
-			///world[4 * i + 1] = pos2;
-			///world[4 * i + 2] = 0;
-			///world[4 * i + 3] = 0;
+			world[4 * i] = pos1;
+			world[4 * i + 1] = pos2;
+			world[4 * i + 2] = 0;
+			world[4 * i + 3] = 0;
 		}
 	}
 	/* Inicializacion */
@@ -100,7 +100,7 @@ int main(int argc, char * argv[]) {
 		MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD);
 		variables = fill_mat(number_people, rec, num_sick);
 		MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-		for (int i = mid * block1; i < mid * block1 + block1; i++) {
+		for (int i = 0; i < block1; i++) {
 			sick = 0;
 			x = world[4 * i];
 			y = world[4 * i + 1];
@@ -121,7 +121,7 @@ int main(int argc, char * argv[]) {
 				}
 			}
 			else if (state == 0) {
-				///sick = num_sick[x][y];
+				sick = num_sick[x][y];
 				for (int j = 0; j < sick; j++) { //Hacemos un for por cada enfermo en la misma posicion de la persona
 					prob_infect = distribution(generator);
 					if (prob_infect < infectiousness) {
@@ -226,7 +226,7 @@ int* fill_mat(int number_people, int* rec, int** sick_time) {
 		else if (state == 2) {
 			variables[2]++;
 		}
-		else if (state == 3){
+		else if (state == 3) {
 			variables[3]++;
 		}
 	}
