@@ -97,7 +97,7 @@ int main(int argc, char * argv[]) {
 
 	/* Actualizaciones por tic */
 	do {
-	///	MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD);
+		MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD);
 		variables = fill_mat(number_people, rec, num_sick);
 		MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 		for (int i = 0; i < block1; i++) {
@@ -175,7 +175,7 @@ int movePos(int pos, int world_size) {
 }
 
 bool write(int actual_tic, string name, int number_people, int* world, int world_size, int mid, int cnt_proc, int* rec_var) {
-	int x, y, pos1, pos2;
+	int x, y, pos1, pos2, block1;
 	int healthy_people = rec_var[0];
 	int sick_people = rec_var[1];
 	int inmune_people = rec_var[2];
@@ -193,11 +193,12 @@ bool write(int actual_tic, string name, int number_people, int* world, int world
 		file.close(); //Hacer archivo
 	}
 
+	block1 = number_people / cnt_proc;
 	if (sick_people == 0) {
 		stable = 1;
 	}
 	else {
-		for (int i = 0; i < number_people; i++) { //Volvemos a llenar la matriz despues de haber procesado a todos en el tic anterior
+		for (int i = 0; i < block1; i++) { //Volvemos a llenar la matriz despues de haber procesado a todos en el tic anterior
 			x = world[4 * i];
 			y = world[4 * i + 1];
 			pos1 = movePos(x, world_size);
