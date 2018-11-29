@@ -97,7 +97,7 @@ int main(int argc, char * argv[]) {
 
 	/* Actualizaciones por tic */
 	do {
-		MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD);
+	///	MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD);
 		variables = fill_mat(number_people, rec, num_sick);
 		MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 		for (int i = 0; i < block1; i++) {
@@ -185,10 +185,10 @@ bool write(int actual_tic, string name, int number_people, int* world, int world
 		ofstream file;
 		file.open(name, ios_base::app);
 		file << "Reporte del tic " << actual_tic << endl
-			<< " Personas muertas total " << dead_people << ", promedio " << dead_people / actual_tic << ", porcentaje " << number_people * dead_people / 100 << endl
-			<< " Personas sanas total " << healthy_people << ", promedio " << healthy_people / actual_tic << ", porcentaje " << number_people * healthy_people / 100 << endl
-			<< " Personas enfermas total " << sick_people << ", promedio " << sick_people / actual_tic << ", porcentaje " << number_people * sick_people / 100 << endl
-			<< " Personas inmunes total " << inmune_people << ", promedio " << inmune_people / actual_tic << ", porcentaje " << number_people * inmune_people / 100 << endl;
+			<< " Personas muertas total " << dead_people / cnt_proc << ", promedio " << (dead_people / cnt_proc) / actual_tic << ", porcentaje " << number_people * (dead_people / cnt_proc) / 100 << endl
+			<< " Personas sanas total " << healthy_people / cnt_proc << ", promedio " << (healthy_people / cnt_proc) / actual_tic << ", porcentaje " << number_people * (healthy_people / cnt_proc) / 100 << endl
+			<< " Personas enfermas total " << sick_people / cnt_proc << ", promedio " << (sick_people / cnt_proc) / actual_tic << ", porcentaje " << number_people * (sick_people / cnt_proc) / 100 << endl
+			<< " Personas inmunes total " << inmune_people / cnt_proc << ", promedio " << (inmune_people / cnt_proc) / actual_tic << ", porcentaje " << number_people * (inmune_people / cnt_proc) / 100 << endl;
 
 		file.close(); //Hacer archivo
 	}
