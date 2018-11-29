@@ -203,7 +203,7 @@ bool write(int actual_tic, string name, int number_people, int* world, int world
 			y = world[4 * i + 1];
 			pos1 = movePos(x, world_size);
 			pos2 = movePos(y, world_size);
-			world[4 * i] = pos1;
+		///	world[4 * i] = pos1;
 			world[4 * i + 1] = pos2;
 		}
 	}
