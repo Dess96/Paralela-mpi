@@ -10,11 +10,11 @@ using namespace std;
 //#define DEBUG
 
 /* Funciones */
-void obt_args(char* argv[], int&, double&, double&, int&, int&, int&, int&);
-void fill_mat(int, int*, int**);
+void obt_args(char* argv[], int&, int&, int&, int&, int&, int&, int&);
+int* fill_mat(int, int*, int**);
 void clear_mat(int, int**);
 int movePos(int, int);
-bool write(int, string, int, int, int, int, int, int*, int, int, int);
+bool write(int, string, int, int*, int, int, int, int*);
 /* Funciones */
 
 int main(int argc, char * argv[]) {
@@ -33,13 +33,15 @@ int main(int argc, char * argv[]) {
 
 	int* world;
 	int* rec;
+	int* variables;
+	int* rec_var;
 	int** num_sick;
-	int world_size, death_duration, tic, number_people, infected, perc, healthy, pos1, pos2, block1, sick, x, y, state, sick_time; 
+	int world_size, death_duration, tic, number_people, infected, perc, healthy, pos1, pos2, block1, sick, x, y, state, sick_time, chance, infect;
 	int healthy_people, sick_people, dead_people, inmune_people;
 	int new_sim = 1;
 	int sims = 1;
 	int actual_tic = 1;
-	double infectiousness, chance_recover, arch_time;
+	double infectiousness, arch_time, chance_recover;
 	double prob_rec, prob_infect;
 	bool stable = false;
 	string number;
@@ -48,7 +50,9 @@ int main(int argc, char * argv[]) {
 	random_device generator;
 	uniform_real_distribution<double> distribution(0.0, 1.0);
 
-	obt_args(argv, number_people, infectiousness, chance_recover, death_duration, infected, world_size, tic);
+	obt_args(argv, number_people, infect, chance, death_duration, infected, world_size, tic);
+	infectiousness = (double)infect / 100;
+	chance_recover = (double)chance / 100;
 	if (mid == 0) {
 		name = "report_"; //Nos encargamos de crear el nombre del futuro archivo por simulacion
 		number = to_string(sims);
@@ -62,6 +66,8 @@ int main(int argc, char * argv[]) {
 	}
 	world = new int[number_people * 4 / cnt_proc];
 	rec = new int[number_people * 4];
+	variables = new int[4];
+	rec_var = new int[4];
 	/* Matriz con enfermos y arreglo con personas y sus atributos*/
 
 	/* Inicializacion */
@@ -90,12 +96,10 @@ int main(int argc, char * argv[]) {
 	/* Inicializacion */
 
 	/* Actualizaciones por tic */
-	healthy_people = healthy;
-	sick_people = number_people - healthy; //Los enfermos son el resto
-	dead_people = inmune_people = 0;
 	do {
 		MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD);
-		fill_mat(number_people, rec, num_sick);
+		variables = fill_mat(number_people, rec, num_sick);
+		MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 		for (int i = mid * block1; i < mid * block1 + block1; i++) {
 			sick = 0;
 			x = world[4 * i];
@@ -107,17 +111,9 @@ int main(int argc, char * argv[]) {
 					prob_rec = distribution(generator); //Decidimos si la persona se enferma o se hace inmune
 					if (prob_rec < chance_recover) {
 						world[4 * i + 2] = 2;
-						if (mid == 0) {
-							sick_people--;
-							inmune_people++;
-						}
 					}
 					else {
 						world[4 * i + 2] = 3;
-						if (mid == 0) {
-							sick_people--;
-							dead_people++;
-						}
 					}
 				}
 				else { //Si todavia no le toca, aumentamos el tiempo que lleva enferma
@@ -131,16 +127,11 @@ int main(int argc, char * argv[]) {
 					if (prob_infect < infectiousness) {
 						world[4 * i + 2] = 1;
 						world[4 * i + 3] = 1;
-						if (mid == 0) {
-							healthy_people--;
-							sick_people++;
-						}
 					}
 				}
 			}
 		}
-		cout << "do" << endl;
-		stable = write(actual_tic, name, healthy_people, dead_people, sick_people, inmune_people, number_people, world, world_size, mid, cnt_proc);
+		stable = write(actual_tic, name, number_people, world, world_size, mid, cnt_proc, rec_var);
 		clear_mat(world_size, num_sick);
 		actual_tic++;
 	} while (!stable && (actual_tic <= tic));
@@ -161,10 +152,10 @@ int main(int argc, char * argv[]) {
 	return 0;
 }
 
-void obt_args(char* argv[], int& number_people, double& infectiousness, double& chance_recover, int& death_duration, int& infected, int& world_size, int& tic) {
+void obt_args(char* argv[], int& number_people, int& infect, int& chance, int& death_duration, int& infected, int& world_size, int& tic) {
 	number_people = strtol(argv[1], NULL, 10);
-	infectiousness = strtol(argv[2], NULL, 10);
-	chance_recover = strtol(argv[3], NULL, 10);
+	infect = strtol(argv[2], NULL, 10);
+	chance = strtol(argv[3], NULL, 10);
 	death_duration = strtol(argv[4], NULL, 10);
 	infected = strtol(argv[5], NULL, 10);
 	world_size = strtol(argv[6], NULL, 10);
@@ -186,8 +177,12 @@ int movePos(int pos, int world_size) {
 	return pos;
 }
 
-bool write(int actual_tic, string name, int healthy_people, int dead_people, int sick_people, int inmune_people, int number_people, int* world, int world_size, int mid, int cnt_proc) {
+bool write(int actual_tic, string name, int number_people, int* world, int world_size, int mid, int cnt_proc, int* rec_var) {
 	int x, y, pos1, pos2;
+	int healthy_people = rec_var[0];
+	int sick_people = rec_var[1];
+	int inmune_people = rec_var[2];
+	int dead_people = rec_var[3];
 	int block1 = number_people / cnt_proc;
 	bool stable = 0;
 	if (mid == 0) {
@@ -218,7 +213,8 @@ bool write(int actual_tic, string name, int healthy_people, int dead_people, int
 	return stable;
 }
 
-void fill_mat(int number_people, int* rec, int** sick_time) {
+int* fill_mat(int number_people, int* rec, int** sick_time) {
+	int* variables = new int[4]();
 	int x, y, state;
 	for (int i = 0; i < number_people; i++) {
 		x = rec[4 * i];
@@ -226,8 +222,19 @@ void fill_mat(int number_people, int* rec, int** sick_time) {
 		state = rec[4 * i + 2];
 		if (state == 1) {
 			sick_time[x][y]++;
+			variables[1]++;
+		}
+		else if (state == 0) {
+			variables[0]++;
+		}
+		else if (state == 2) {
+			variables[2]++;
+		}
+		else if (state == 3){
+			variables[3]++;
 		}
 	}
+	return variables;
 }
 
 void clear_mat(int world_size, int** num_sick) {
