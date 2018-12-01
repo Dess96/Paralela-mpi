@@ -10,7 +10,8 @@ using namespace std;
 //#define DEBUG
 
 /* Funciones */
-void obt_args(char* argv[], int&, int&, int&, int&, int&, int&, int&);
+void obt_args(char* argv[], int&, int&, int&, int&, int&, int&);
+int validate(int, int, int, int, int, int);
 int* fill_mat(int, int*, int**);
 void clear_mat(int, int**);
 int movePos(int, int);
@@ -36,13 +37,11 @@ int main(int argc, char * argv[]) {
 	int* variables;
 	int* rec_var;
 	int** num_sick;
-	int world_size, death_duration, tic, number_people, infected, perc, healthy, pos1, pos2, block1, sick, x, y, state, sick_time, chance, infect;
-	int healthy_people, sick_people, dead_people, inmune_people;
+	int world_size, death_duration, number_people, infected, perc, pos1, pos2, block1, sick, x, y, state, sick_time, chance, infect, correct;
 	int new_sim = 1;
 	int sims = 1;
 	int actual_tic = 1;
-	double infectiousness, arch_time, chance_recover;
-	double prob_rec, prob_infect;
+	double infectiousness, arch_time, chance_recover, prob_rec, prob_infect;
 	bool stable = false;
 	string number;
 	string name = " ";
@@ -50,113 +49,125 @@ int main(int argc, char * argv[]) {
 	random_device generator;
 	uniform_real_distribution<double> distribution(0.0, 1.0);
 
-	obt_args(argv, number_people, infect, chance, death_duration, infected, world_size, tic);
-	infectiousness = (double)infect / 100;
-	chance_recover = (double)chance / 100;
+	obt_args(argv, number_people, infect, chance, death_duration, infected, world_size);
+	/* validacion de parametros*/
 	if (mid == 0) {
-		name = "report_"; //Nos encargamos de crear el nombre del futuro archivo por simulacion
-		number = to_string(sims);
-		name.append(number);
-		name.append(".txt");
+		correct = validate(number_people, infect, chance, death_duration, infected, world_size);
 	}
-	/* Matriz con enfermos y arreglo con personas y sus atributos*/
-	num_sick = new int*[world_size];
-	for (int i = 0; i < world_size; i++) {
-		num_sick[i] = new int[world_size]();
-	}
-	world = new int[number_people * 4 / cnt_proc];
-	rec = new int[number_people * 4];
-	variables = new int[4];
-	rec_var = new int[4];
-	/* Matriz con enfermos y arreglo con personas y sus atributos*/
-
-	/* Inicializacion */
-	perc = number_people * infected / 100; //Cantidad correspondiente al porcentaje dado
-	healthy = number_people - perc; //Gente sana
-	block1 = number_people / cnt_proc;
-
-	for (int i = 0; i < block1; i++) { //Cambiamos a los infectados
-		if (i < perc) {
-			pos1 = rd() % world_size;
-			pos2 = rd() % world_size;
-			world[4 * i] = pos1;
-			world[4 * i + 1] = pos2;
-			world[4 * i + 2] = 1;
-			world[4 * i + 3] = 1;
+	MPI_Bcast(&correct, 1, MPI_INT, 0, MPI_COMM_WORLD); //Hacemos un Bcast para que los demas procesos sepan cuando no se debe correr el programa
+	if (correct == -1) { //Si algun parametros es incorrecto, el programa termina
+		if (mid == 0) {
+			cout << "Presione cualquier tecla para salir del programa." << endl;
+			cin.ignore();
 		}
-		else {
-			pos1 = rd() % world_size;
-			pos2 = rd() % world_size;
-			world[4 * i] = pos1;
-			world[4 * i + 1] = pos2;
-			world[4 * i + 2] = 0;
-			world[4 * i + 3] = 0;
-		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Finalize();
 	}
-	/* Inicializacion */
+	else {
+		infectiousness = (double)infect / 100;
+		chance_recover = (double)chance / 100;
+		if (mid == 0) {
+			name = "report_"; //Nos encargamos de crear el nombre del futuro archivo por simulacion
+			number = to_string(sims);
+			name.append(number);
+			name.append(".txt");
+		}
+		/* Matriz con enfermos y arreglo con personas y sus atributos*/
+		num_sick = new int*[world_size];
+		for (int i = 0; i < world_size; i++) {
+			num_sick[i] = new int[world_size]();
+		}
+		world = new int[number_people * 4 / cnt_proc];
+		rec = new int[number_people * 4];
+		variables = new int[4];
+		rec_var = new int[4];
+		/* Matriz con enfermos y arreglo con personas y sus atributos*/
 
-	/* Actualizaciones por tic */
-	do {
-		MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD);
-		variables = fill_mat(number_people, rec, num_sick);
-		MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-		for (int i = 0; i < block1; i++) {
-			sick = 0;
-			x = world[4 * i];
-			y = world[4 * i + 1];
-			state = world[4 * i + 2];
-			if (state == 1) {
-				sick_time = world[4 * i + 3];
-				if (sick_time >= death_duration) {
-					prob_rec = distribution(generator); //Decidimos si la persona se enferma o se hace inmune
-					if (prob_rec < chance_recover) {
-						world[4 * i + 2] = 2;
-					}
-					else {
-						world[4 * i + 2] = 3;
-					}
-				}
-				else { //Si todavia no le toca, aumentamos el tiempo que lleva enferma
-					world[4 * i + 3]++;
-				}
+		/* Inicializacion */
+		perc = number_people * infected / 100; //Cantidad correspondiente al porcentaje dado
+		block1 = number_people / cnt_proc;
+
+		for (int i = 0; i < block1; i++) { //Cambiamos a los infectados
+			if (i < perc) {
+				pos1 = rd() % world_size;
+				pos2 = rd() % world_size;
+				world[4 * i] = pos1;
+				world[4 * i + 1] = pos2;
+				world[4 * i + 2] = 1;
+				world[4 * i + 3] = 1;
 			}
-			else if (state == 0) {
-				sick = num_sick[x][y];
-				for (int j = 0; j < sick; j++) { //Hacemos un for por cada enfermo en la misma posicion de la persona
-					prob_infect = distribution(generator);
-					if (prob_infect < infectiousness) {
-						world[4 * i + 2] = 1;
-						world[4 * i + 3] = 1;
-					}
-				}
+			else {
+				pos1 = rd() % world_size;
+				pos2 = rd() % world_size;
+				world[4 * i] = pos1;
+				world[4 * i + 1] = pos2;
+				world[4 * i + 2] = 0;
+				world[4 * i + 3] = 0;
 			}
 		}
-		stable = write(actual_tic, name, number_people, world, world_size, mid, cnt_proc, rec_var);
-		clear_mat(world_size, num_sick);
-		actual_tic++;
-	} while (!stable && (actual_tic <= tic));
-	/* Actualizaciones por tic */
+		/* Inicializacion */
 
-	if (mid == 0) {
-		cout << endl;
-		cout << "Desea ver otra simulacion?" << endl;
-		cout << "1. Si   2. No" << endl;
-		cin >> new_sim;
+		/* Actualizaciones por tic */
+		do {
+			MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD);
+			variables = fill_mat(number_people, rec, num_sick);
+			MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+			for (int i = 0; i < block1; i++) {
+				sick = 0;
+				x = world[4 * i];
+				y = world[4 * i + 1];
+				state = world[4 * i + 2];
+				if (state == 1) {
+					sick_time = world[4 * i + 3];
+					if (sick_time >= death_duration) {
+						prob_rec = distribution(generator); //Decidimos si la persona se enferma o se hace inmune
+						if (prob_rec < chance_recover) {
+							world[4 * i + 2] = 2;
+						}
+						else {
+							world[4 * i + 2] = 3;
+						}
+					}
+					else { //Si todavia no le toca, aumentamos el tiempo que lleva enferma
+						world[4 * i + 3]++;
+					}
+				}
+				else if (state == 0) {
+					sick = num_sick[x][y];
+					for (int j = 0; j < sick; j++) { //Hacemos un for por cada enfermo en la misma posicion de la persona
+						prob_infect = distribution(generator);
+						if (prob_infect < infectiousness) {
+							world[4 * i + 2] = 1;
+							world[4 * i + 3] = 1;
+						}
+					}
+				}
+			}
+			stable = write(actual_tic, name, number_people, world, world_size, mid, cnt_proc, rec_var);
+			clear_mat(world_size, num_sick);
+			actual_tic++;
+		} while (!stable);
+		/* Actualizaciones por tic */
+
+		if (mid == 0) {
+			cout << endl;
+			cout << "Desea ver otra simulacion?" << endl;
+			cout << "1. Si   2. No" << endl;
+			cin >> new_sim;
+		}
+		MPI_Barrier(MPI_COMM_WORLD); // para sincronizar la finalización de los procesos
+		MPI_Finalize();
 	}
-	MPI_Barrier(MPI_COMM_WORLD); // para sincronizar la finalización de los procesos
-	MPI_Finalize();
-
 	return 0;
 }
 
-void obt_args(char* argv[], int& number_people, int& infect, int& chance, int& death_duration, int& infected, int& world_size, int& tic) {
+void obt_args(char* argv[], int& number_people, int& infect, int& chance, int& death_duration, int& infected, int& world_size) {
 	number_people = strtol(argv[1], NULL, 10);
 	infect = strtol(argv[2], NULL, 10);
 	chance = strtol(argv[3], NULL, 10);
 	death_duration = strtol(argv[4], NULL, 10);
 	infected = strtol(argv[5], NULL, 10);
 	world_size = strtol(argv[6], NULL, 10);
-	tic = strtol(argv[7], NULL, 10);
 }
 
 int movePos(int pos, int world_size) {
@@ -203,7 +214,7 @@ bool write(int actual_tic, string name, int number_people, int* world, int world
 			y = world[4 * i + 1];
 			pos1 = movePos(x, world_size);
 			pos2 = movePos(y, world_size);
-		///	world[4 * i] = pos1;
+			world[4 * i] = pos1;
 			world[4 * i + 1] = pos2;
 		}
 	}
@@ -241,3 +252,24 @@ void clear_mat(int world_size, int** num_sick) {
 		}
 	}
 }
+
+int validate(int number_people, int infect, int chance, int death_duration, int infected, int world_size) {
+	int correct = -1;
+	if (number_people < 0 || number_people > 10000000) {
+		cout << "La cantidad de personas deberia estar entre 0 y 10 000 000. La cantidad ingresada es invalida." << endl;
+	} if (infect < 0 || infect > 100) {
+		cout << "La probabilidad de infeccion de personas deberia estar entre 0 y 100 por ciento. La cantidad ingresada es invalida." << endl;
+	} if (chance < 0 || chance > 100) {
+		cout << "La probabilidad de recuperacion de personas deberia estar entre 0 y 100 por ciento. La cantidad ingresada es invalida." << endl;
+	} if (death_duration < 5 || death_duration > 50) {
+		cout << "La duracion de muerte de personas deberia estar entre 5 y 50. La cantidad ingresada es invalida." << endl;
+	} if (infected < 0 || infected > 10) {
+		cout << "La cantidad de personas inicialmente infectadas deberia estar entre 0 y 10 por ciento. La cantidad ingresada es invalida." << endl;
+	} if (world_size != 100 || world_size != 500 || world_size != 1000) {
+		cout << "El tamano del mundo debe ser 100 x 100, 500 x 500 o 1000 x 1000. La cantidad ingresada es invalida." << endl;
+	}
+	else {
+		correct = 0;
+	}
+	return correct;
+} 
