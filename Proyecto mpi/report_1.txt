@@ -1,185 +1,200 @@
 Reporte del tic 1
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 90, promedio 90, porcentaje 90
- Personas enfermas total 10, promedio 10, porcentaje 10
+ Personas sanas total 40, promedio 40, porcentaje 80
+ Personas enfermas total 160, promedio 160, porcentaje 320
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 2
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 89, promedio 44, porcentaje 89
- Personas enfermas total 11, promedio 5, porcentaje 11
+ Personas sanas total 40, promedio 20, porcentaje 80
+ Personas enfermas total 160, promedio 80, porcentaje 320
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 3
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 89, promedio 29, porcentaje 89
- Personas enfermas total 11, promedio 3, porcentaje 11
+ Personas sanas total 40, promedio 13, porcentaje 80
+ Personas enfermas total 160, promedio 53, porcentaje 320
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 4
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 89, promedio 22, porcentaje 89
- Personas enfermas total 11, promedio 2, porcentaje 11
+ Personas sanas total 40, promedio 10, porcentaje 80
+ Personas enfermas total 160, promedio 40, porcentaje 320
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 5
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 88, promedio 17, porcentaje 88
- Personas enfermas total 12, promedio 2, porcentaje 12
+ Personas sanas total 39, promedio 7, porcentaje 78
+ Personas enfermas total 161, promedio 32, porcentaje 322
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 6
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 87, promedio 14, porcentaje 87
- Personas enfermas total 13, promedio 2, porcentaje 13
+ Personas sanas total 39, promedio 6, porcentaje 78
+ Personas enfermas total 161, promedio 26, porcentaje 322
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 7
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 87, promedio 12, porcentaje 87
- Personas enfermas total 13, promedio 1, porcentaje 13
+ Personas sanas total 38, promedio 5, porcentaje 76
+ Personas enfermas total 162, promedio 23, porcentaje 324
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 8
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 87, promedio 10, porcentaje 87
- Personas enfermas total 13, promedio 1, porcentaje 13
+ Personas sanas total 38, promedio 4, porcentaje 76
+ Personas enfermas total 162, promedio 20, porcentaje 324
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 9
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 87, promedio 9, porcentaje 87
- Personas enfermas total 13, promedio 1, porcentaje 13
+ Personas sanas total 38, promedio 4, porcentaje 76
+ Personas enfermas total 162, promedio 18, porcentaje 324
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 10
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 87, promedio 8, porcentaje 87
- Personas enfermas total 13, promedio 1, porcentaje 13
+ Personas sanas total 38, promedio 3, porcentaje 76
+ Personas enfermas total 162, promedio 16, porcentaje 324
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 11
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 87, promedio 7, porcentaje 87
- Personas enfermas total 13, promedio 1, porcentaje 13
+ Personas sanas total 38, promedio 3, porcentaje 76
+ Personas enfermas total 162, promedio 14, porcentaje 324
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 12
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 86, promedio 7, porcentaje 86
- Personas enfermas total 14, promedio 1, porcentaje 14
+ Personas sanas total 38, promedio 3, porcentaje 76
+ Personas enfermas total 162, promedio 13, porcentaje 324
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 13
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 85, promedio 6, porcentaje 85
- Personas enfermas total 15, promedio 1, porcentaje 15
+ Personas sanas total 37, promedio 2, porcentaje 74
+ Personas enfermas total 163, promedio 12, porcentaje 326
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 14
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 84, promedio 6, porcentaje 84
- Personas enfermas total 16, promedio 1, porcentaje 16
+ Personas sanas total 37, promedio 2, porcentaje 74
+ Personas enfermas total 163, promedio 11, porcentaje 326
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 15
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 84, promedio 5, porcentaje 84
- Personas enfermas total 16, promedio 1, porcentaje 16
+ Personas sanas total 37, promedio 2, porcentaje 74
+ Personas enfermas total 163, promedio 10, porcentaje 326
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 16
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 84, promedio 5, porcentaje 84
- Personas enfermas total 16, promedio 1, porcentaje 16
+ Personas sanas total 37, promedio 2, porcentaje 74
+ Personas enfermas total 163, promedio 10, porcentaje 326
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 17
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 83, promedio 4, porcentaje 83
- Personas enfermas total 17, promedio 1, porcentaje 17
+ Personas sanas total 37, promedio 2, porcentaje 74
+ Personas enfermas total 163, promedio 9, porcentaje 326
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 18
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 83, promedio 4, porcentaje 83
- Personas enfermas total 17, promedio 0, porcentaje 17
+ Personas sanas total 37, promedio 2, porcentaje 74
+ Personas enfermas total 163, promedio 9, porcentaje 326
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 19
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 83, promedio 4, porcentaje 83
- Personas enfermas total 17, promedio 0, porcentaje 17
+ Personas sanas total 37, promedio 1, porcentaje 74
+ Personas enfermas total 163, promedio 8, porcentaje 326
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 20
  Personas muertas total 0, promedio 0, porcentaje 0
- Personas sanas total 83, promedio 4, porcentaje 83
- Personas enfermas total 17, promedio 0, porcentaje 17
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 164, promedio 8, porcentaje 328
  Personas inmunes total 0, promedio 0, porcentaje 0
 Reporte del tic 21
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 3, porcentaje 83
- Personas enfermas total 7, promedio 0, porcentaje 7
- Personas inmunes total 7, promedio 0, porcentaje 7
+ Personas muertas total 49, promedio 2, porcentaje 98
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 4, promedio 0, porcentaje 8
+ Personas inmunes total 111, promedio 5, porcentaje 222
 Reporte del tic 22
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 3, porcentaje 83
- Personas enfermas total 6, promedio 0, porcentaje 6
- Personas inmunes total 8, promedio 0, porcentaje 8
+ Personas muertas total 49, promedio 2, porcentaje 98
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 4, promedio 0, porcentaje 8
+ Personas inmunes total 111, promedio 5, porcentaje 222
 Reporte del tic 23
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 3, porcentaje 83
- Personas enfermas total 6, promedio 0, porcentaje 6
- Personas inmunes total 8, promedio 0, porcentaje 8
+ Personas muertas total 49, promedio 2, porcentaje 98
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 4, promedio 0, porcentaje 8
+ Personas inmunes total 111, promedio 4, porcentaje 222
 Reporte del tic 24
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 3, porcentaje 83
- Personas enfermas total 6, promedio 0, porcentaje 6
- Personas inmunes total 8, promedio 0, porcentaje 8
+ Personas muertas total 49, promedio 2, porcentaje 98
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 4, promedio 0, porcentaje 8
+ Personas inmunes total 111, promedio 4, porcentaje 222
 Reporte del tic 25
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 3, porcentaje 83
- Personas enfermas total 5, promedio 0, porcentaje 5
- Personas inmunes total 9, promedio 0, porcentaje 9
+ Personas muertas total 50, promedio 2, porcentaje 100
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 3, promedio 0, porcentaje 6
+ Personas inmunes total 111, promedio 4, porcentaje 222
 Reporte del tic 26
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 3, porcentaje 83
- Personas enfermas total 4, promedio 0, porcentaje 4
- Personas inmunes total 10, promedio 0, porcentaje 10
+ Personas muertas total 50, promedio 1, porcentaje 100
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 3, promedio 0, porcentaje 6
+ Personas inmunes total 111, promedio 4, porcentaje 222
 Reporte del tic 27
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 3, porcentaje 83
- Personas enfermas total 4, promedio 0, porcentaje 4
- Personas inmunes total 10, promedio 0, porcentaje 10
+ Personas muertas total 50, promedio 1, porcentaje 100
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 2, promedio 0, porcentaje 4
+ Personas inmunes total 112, promedio 4, porcentaje 224
 Reporte del tic 28
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 2, porcentaje 83
- Personas enfermas total 4, promedio 0, porcentaje 4
- Personas inmunes total 10, promedio 0, porcentaje 10
+ Personas muertas total 50, promedio 1, porcentaje 100
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 2, promedio 0, porcentaje 4
+ Personas inmunes total 112, promedio 4, porcentaje 224
 Reporte del tic 29
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 2, porcentaje 83
- Personas enfermas total 4, promedio 0, porcentaje 4
- Personas inmunes total 10, promedio 0, porcentaje 10
+ Personas muertas total 50, promedio 1, porcentaje 100
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 2, promedio 0, porcentaje 4
+ Personas inmunes total 112, promedio 3, porcentaje 224
 Reporte del tic 30
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 2, porcentaje 83
- Personas enfermas total 4, promedio 0, porcentaje 4
- Personas inmunes total 10, promedio 0, porcentaje 10
+ Personas muertas total 50, promedio 1, porcentaje 100
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 2, promedio 0, porcentaje 4
+ Personas inmunes total 112, promedio 3, porcentaje 224
 Reporte del tic 31
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 2, porcentaje 83
- Personas enfermas total 4, promedio 0, porcentaje 4
- Personas inmunes total 10, promedio 0, porcentaje 10
+ Personas muertas total 50, promedio 1, porcentaje 100
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 2, promedio 0, porcentaje 4
+ Personas inmunes total 112, promedio 3, porcentaje 224
 Reporte del tic 32
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 2, porcentaje 83
- Personas enfermas total 3, promedio 0, porcentaje 3
- Personas inmunes total 11, promedio 0, porcentaje 11
+ Personas muertas total 50, promedio 1, porcentaje 100
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 2, promedio 0, porcentaje 4
+ Personas inmunes total 112, promedio 3, porcentaje 224
 Reporte del tic 33
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 2, porcentaje 83
- Personas enfermas total 2, promedio 0, porcentaje 2
- Personas inmunes total 12, promedio 0, porcentaje 12
+ Personas muertas total 51, promedio 1, porcentaje 102
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 1, promedio 0, porcentaje 2
+ Personas inmunes total 112, promedio 3, porcentaje 224
 Reporte del tic 34
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 2, porcentaje 83
- Personas enfermas total 1, promedio 0, porcentaje 1
- Personas inmunes total 13, promedio 0, porcentaje 13
+ Personas muertas total 51, promedio 1, porcentaje 102
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 1, promedio 0, porcentaje 2
+ Personas inmunes total 112, promedio 3, porcentaje 224
 Reporte del tic 35
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 2, porcentaje 83
- Personas enfermas total 1, promedio 0, porcentaje 1
- Personas inmunes total 13, promedio 0, porcentaje 13
+ Personas muertas total 51, promedio 1, porcentaje 102
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 1, promedio 0, porcentaje 2
+ Personas inmunes total 112, promedio 3, porcentaje 224
 Reporte del tic 36
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 2, porcentaje 83
- Personas enfermas total 1, promedio 0, porcentaje 1
- Personas inmunes total 13, promedio 0, porcentaje 13
+ Personas muertas total 51, promedio 1, porcentaje 102
+ Personas sanas total 36, promedio 1, porcentaje 72
+ Personas enfermas total 1, promedio 0, porcentaje 2
+ Personas inmunes total 112, promedio 3, porcentaje 224
 Reporte del tic 37
- Personas muertas total 3, promedio 0, porcentaje 3
- Personas sanas total 83, promedio 2, porcentaje 83
+ Personas muertas total 51, promedio 1, porcentaje 102
+ Personas sanas total 36, promedio 0, porcentaje 72
+ Personas enfermas total 1, promedio 0, porcentaje 2
+ Personas inmunes total 112, promedio 3, porcentaje 224
+Reporte del tic 38
+ Personas muertas total 51, promedio 1, porcentaje 102
+ Personas sanas total 36, promedio 0, porcentaje 72
+ Personas enfermas total 1, promedio 0, porcentaje 2
+ Personas inmunes total 112, promedio 2, porcentaje 224
+Reporte del tic 39
+ Personas muertas total 51, promedio 1, porcentaje 102
+ Personas sanas total 36, promedio 0, porcentaje 72
+ Personas enfermas total 1, promedio 0, porcentaje 2
+ Personas inmunes total 112, promedio 2, porcentaje 224
+Reporte del tic 40
+ Personas muertas total 51, promedio 1, porcentaje 102
+ Personas sanas total 36, promedio 0, porcentaje 72
  Personas enfermas total 0, promedio 0, porcentaje 0
- Personas inmunes total 14, promedio 0, porcentaje 14
+ Personas inmunes total 113, promedio 2, porcentaje 226
