@@ -80,7 +80,7 @@ int main(int argc, char * argv[]) {
 		perc = number_people * infected / 100; //Cantidad correspondiente al porcentaje dado
 		block1 = number_people / cnt_proc; //Bloque que le tocara a cada proceso
 		perc /= cnt_proc;
-		for (int i = 0; i < block1; i++) { //Cambiamos a los infectados
+		for (int i = 0; i < block1; ++i) { //Cambiamos a los infectados
 			if (i < perc) {
 				pos1 = rd() % world_size;
 				pos2 = rd() % world_size;
@@ -110,13 +110,13 @@ int main(int argc, char * argv[]) {
 				//la informacion de las personas y sus atributos
 				fill_mat(number_people, rec, num_sick, world_size); //Llenamos matriz con la cantidad de enfermos
 			}
-			for (int i = 0; i < block1; i++) {
+			for (int i = 0; i < block1; ++i) {
 				sick = 0;
 				x = world[4 * i];
 				y = world[4 * i + 1];
 				state = world[4 * i + 2];
 				if (state == 1) {
-					variables[1]++;
+					++variables[1];
 					sick_time = world[4 * i + 3];
 					if (sick_time >= death_duration) {
 						prob_rec = distribution(generator); //Decidimos si la persona se enferma o se hace inmune
@@ -132,10 +132,10 @@ int main(int argc, char * argv[]) {
 					}
 				}
 				else if (state == 0) {
-					variables[0]++;
+					++variables[0];
 					index = x * world_size + y;
 					sick = num_sick[index];
-					for (int j = 0; j < sick; j++) { //Hacemos un for por cada enfermo en la misma posicion de la persona
+					for (int j = 0; j < sick; ++j) { //Hacemos un for por cada enfermo en la misma posicion de la persona
 						prob_infect = distribution(generator);
 						if (prob_infect < infectiousness) {
 							world[4 * i + 2] = 1;
@@ -144,10 +144,10 @@ int main(int argc, char * argv[]) {
 					}
 				}
 				else if (state == 2) {
-					variables[2]++;
+					++variables[2];
 				}
 				else if (state == 3) {
-					variables[3]++;
+					++variables[3];
 				}
 				pos1 = movePos(x, world_size);
 				pos2 = movePos(y, world_size);
@@ -156,7 +156,7 @@ int main(int argc, char * argv[]) {
 			}
 			MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD); //Hacemos reduce de cada variable
 			stable = write(actual_tic, name, number_people, world, world_size, mid, cnt_proc, rec_var); //Crear archivo y escribir en la consola
-			actual_tic++;
+			++actual_tic;
 		} while (!stable);
 		/* Actualizaciones por tic */
 		local_finish = MPI_Wtime();
@@ -206,17 +206,17 @@ int validate(int number_people, int infect, int chance, int death_duration, int 
 
 void fill_mat(int number_people, int* rec, int* num_sick, int world_size) { //Llena la matriz con los enfermos y ademas lleva la cuenta de las variables de personas
 	int x, y, state, index;
-	for (int i = 0; i < world_size*world_size; i++) {
+	for (int i = world_size * world_size; i >= 0; --i) {
 		num_sick[i] = 0;
 	}
 
-	for (int i = 0; i < number_people; i++) {
+	for (int i = number_people; i >= 0; --i) {
 		x = rec[4 * i];
 		y = rec[4 * i + 1];
 		state = rec[4 * i + 2];
 		if (state == 1) {
 			index = x * world_size + y;
-			num_sick[index]++;
+			++num_sick[index];
 		}
 	}
 }
@@ -252,8 +252,7 @@ bool write(int actual_tic, string name, int number_people, int* world, int world
 
 int movePos(int pos, int world_size) { //Genera una nueva posicion con base al parametro
 	random_device rd;
-	int movX;
-	movX = rd() % 2;
+	int movX = rd() % 2;
 	movX -= 1;
 	pos += movX;
 	if (pos < 0) { //Para que no se salga de la matriz
