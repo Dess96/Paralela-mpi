@@ -105,8 +105,8 @@ int main(int argc, char * argv[]) {
 		variables[1] = perc;
 		variables[2] = 0;
 		variables[3] = 0;
-		MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD); //Hacemos reduce de cada variable
-		stable = write(actual_tic, name, number_people, world, world_size, mid, cnt_proc, rec_var); //Crear archivo y escribir en la consola
+	//	MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD); //Hacemos reduce de cada variable
+	//	stable = write(actual_tic, name, number_people, world, world_size, mid, cnt_proc, rec_var); //Crear archivo y escribir en la consola
 		/* Inicializacion */
 
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -226,6 +226,7 @@ void fill_mat(int number_people, int* rec, int** sick_time) { //Llena la matriz 
 }
 
 bool write(int actual_tic, string name, int number_people, int* world, int world_size, int mid, int cnt_proc, int* rec_var) { //Hace archivo e imprime en consola
+	stringstream ss;
 	int x, y, pos1, pos2, block1;
 	int healthy_people = rec_var[0]; //Obtenemos datos del buffer del reduce
 	int sick_people = rec_var[1];
@@ -233,20 +234,18 @@ bool write(int actual_tic, string name, int number_people, int* world, int world
 	int dead_people = rec_var[3];
 	bool stable = 0;
 	if (mid == 0) {
+		ss << "Reporte del tic " << actual_tic << endl
+			<< " Personas muertas total " << dead_people << ", promedio " << (dead_people) / actual_tic << ", porcentaje " << number_people * (dead_people) / 100 << endl
+			<< " Personas sanas total " << healthy_people << ", promedio " << (healthy_people) / actual_tic << ", porcentaje " << number_people * (healthy_people) / 100 << endl
+			<< " Personas enfermas total " << sick_people << ", promedio " << (sick_people) / actual_tic << ", porcentaje " << number_people * (sick_people) / 100 << endl
+			<< " Personas inmunes total " << inmune_people << ", promedio " << (inmune_people) / actual_tic << ", porcentaje " << number_people * (inmune_people) / 100 << endl;
 		ofstream file;
 		file.open(name, ios_base::app);
-		file << "Reporte del tic " << actual_tic << endl
-			<< " Personas muertas total " << dead_people << ", promedio " << (dead_people) / actual_tic << ", porcentaje " << number_people * (dead_people) / 100 << endl
-			<< " Personas sanas total " << healthy_people << ", promedio " << (healthy_people) / actual_tic << ", porcentaje " << number_people * (healthy_people) / 100 << endl
-			<< " Personas enfermas total " << sick_people << ", promedio " << (sick_people) / actual_tic << ", porcentaje " << number_people * (sick_people) / 100 << endl
-			<< " Personas inmunes total " << inmune_people << ", promedio " << (inmune_people) / actual_tic << ", porcentaje " << number_people * (inmune_people) / 100 << endl;
+
+		file << ss.str() << endl;
 
 		file.close(); //Hacer archivo
-		cout << "Reporte del tic " << actual_tic << endl
-			<< " Personas muertas total " << dead_people << ", promedio " << (dead_people) / actual_tic << ", porcentaje " << number_people * (dead_people) / 100 << endl
-			<< " Personas sanas total " << healthy_people << ", promedio " << (healthy_people) / actual_tic << ", porcentaje " << number_people * (healthy_people) / 100 << endl
-			<< " Personas enfermas total " << sick_people << ", promedio " << (sick_people) / actual_tic << ", porcentaje " << number_people * (sick_people) / 100 << endl
-			<< " Personas inmunes total " << inmune_people << ", promedio " << (inmune_people) / actual_tic << ", porcentaje " << number_people * (inmune_people) / 100 << endl;
+		cout << ss.str() << endl;
 	}
 	if (sick_people == 0) {
 		stable = 1;
