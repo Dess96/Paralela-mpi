@@ -11,7 +11,6 @@ using namespace std;
 void obt_args(char* argv[], int&, int&, int&, int&, int&, int&);
 int validate(int, int, int, int, int, int);
 void fill_mat(int, int*, int*, int);
-void clear_mat(int, int*, int*);
 int movePos(int, int);
 bool write(int, string, int, int*, int, int, int, int*);
 /* Funciones */
@@ -109,7 +108,6 @@ int main(int argc, char * argv[]) {
 			if (rec_var[0] != 0) {
 				MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD); //Hacemos que todos los procesos sepan
 				//la informacion de las personas y sus atributos
-				clear_mat(world_size, num_sick, variables); //Limpiar matriz de enfermos
 				fill_mat(number_people, rec, num_sick, world_size); //Llenamos matriz con la cantidad de enfermos
 			}
 			for (int i = 0; i < block1; i++) {
@@ -208,6 +206,10 @@ int validate(int number_people, int infect, int chance, int death_duration, int 
 
 void fill_mat(int number_people, int* rec, int* num_sick, int world_size) { //Llena la matriz con los enfermos y ademas lleva la cuenta de las variables de personas
 	int x, y, state, index;
+	for (int i = 0; i < world_size*world_size; i++) {
+		num_sick[i] = 0;
+	}
+
 	for (int i = 0; i < number_people; i++) {
 		x = rec[4 * i];
 		y = rec[4 * i + 1];
@@ -261,11 +263,4 @@ int movePos(int pos, int world_size) { //Genera una nueva posicion con base al p
 		pos = 0;
 	}
 	return pos;
-}
-
-void clear_mat(int world_size, int* num_sick, int* variables) { //Limpia la matriz de enfermos
-	for (int i = 0; i < world_size*world_size; i++) {
-		num_sick[i] = 0;
-	}
-
 }
