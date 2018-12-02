@@ -83,6 +83,7 @@ int main(int argc, char * argv[]) {
 		/* Inicializacion */
 		perc = number_people * infected / 100; //Cantidad correspondiente al porcentaje dado
 		block1 = number_people / cnt_proc; //Bloque que le tocara a cada proceso
+		perc /= cnt_proc;
 		for (int i = 0; i < block1; i++) { //Cambiamos a los infectados
 			if (i < perc) {
 				pos1 = rd() % world_size;
@@ -101,12 +102,6 @@ int main(int argc, char * argv[]) {
 				world[4 * i + 3] = 0;
 			}
 		}
-		variables[0] = number_people - perc;
-		variables[1] = perc;
-		variables[2] = 0;
-		variables[3] = 0;
-	//	MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD); //Hacemos reduce de cada variable
-	//	stable = write(actual_tic, name, number_people, world, world_size, mid, cnt_proc, rec_var); //Crear archivo y escribir en la consola
 		/* Inicializacion */
 
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -277,4 +272,3 @@ void clear_mat(int world_size, int** num_sick, int* variables) { //Limpia la mat
 	}
 
 }
-
