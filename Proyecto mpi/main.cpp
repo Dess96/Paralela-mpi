@@ -8,11 +8,11 @@
 using namespace std;
 
 /* Funciones */
-void obt_args(char* argv[], int&, int&, int&, int&, int&, int&);
-int validate(int, int, int, int, int, int);
-void fill_mat(int, int*, int*, int);
-int movePos(int, int);
-bool write(int, string, int, int*, int, int, int, int*);
+static void obt_args(char* argv[], int&, int&, int&, int&, int&, int&);
+static int validate(int, int, int, int, int, int);
+static void fill_mat(int&, int*, int*, int&);
+static int movePos(int&, int&);
+static bool write(int&, string&, int&, int*, int&, int&, int&, int*);
 /* Funciones */
 
 /* En world: Primer atributo x, Segundo atributo y, Tercer atributo estado y Cuarto atributo tiempo enfermo */
@@ -204,7 +204,7 @@ int validate(int number_people, int infect, int chance, int death_duration, int 
 	return correct;
 }
 
-void fill_mat(int number_people, int* rec, int* num_sick, int world_size) { //Llena la matriz con los enfermos y ademas lleva la cuenta de las variables de personas
+void fill_mat(int& number_people, int* rec, int* num_sick, int& world_size) { //Llena la matriz con los enfermos y ademas lleva la cuenta de las variables de personas
 	int x, y, state, index;
 	for (int i = world_size * world_size; i >= 0; --i) {
 		num_sick[i] = 0;
@@ -221,7 +221,7 @@ void fill_mat(int number_people, int* rec, int* num_sick, int world_size) { //Ll
 	}
 }
 
-bool write(int actual_tic, string name, int number_people, int* world, int world_size, int mid, int cnt_proc, int* rec_var) { //Hace archivo e imprime en consola
+bool write(int& actual_tic, string& name, int& number_people, int* world, int& world_size, int& mid, int& cnt_proc, int* rec_var) { //Hace archivo e imprime en consola
 	stringstream ss;
 	int x, y, pos1, pos2, block1;
 	int healthy_people = rec_var[0]; //Obtenemos datos del buffer del reduce
@@ -250,7 +250,7 @@ bool write(int actual_tic, string name, int number_people, int* world, int world
 }
 
 
-int movePos(int pos, int world_size) { //Genera una nueva posicion con base al parametro
+int movePos(int& pos, int& world_size) { //Genera una nueva posicion con base al parametro
 	random_device rd;
 	int movX = rd() % 2;
 	movX -= 1;
