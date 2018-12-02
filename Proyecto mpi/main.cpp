@@ -10,7 +10,7 @@ using namespace std;
 /* Funciones */
 void obt_args(char* argv[], int&, int&, int&, int&, int&, int&);
 int validate(int, int, int, int, int, int);
-int* fill_mat(int, int*, int**, int*);
+void fill_mat(int, int*, int**);
 void clear_mat(int, int**, int*);
 int movePos(int, int);
 bool write(int, string, int, int*, int, int, int, int*);
@@ -101,22 +101,32 @@ int main(int argc, char * argv[]) {
 				world[4 * i + 3] = 0;
 			}
 		}
+		variables[0] = number_people - perc;
+		variables[1] = perc;
+		variables[2] = 0;
+		variables[3] = 0;
+		MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD); //Hacemos reduce de cada variable
+		stable = write(actual_tic, name, number_people, world, world_size, mid, cnt_proc, rec_var); //Crear archivo y escribir en la consola
 		/* Inicializacion */
 
 		MPI_Barrier(MPI_COMM_WORLD);
 		local_start = MPI_Wtime();
 		/* Actualizaciones por tic */
 		do {
-			MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD); //Hacemos que todos los procesos sepan
-			//la informacion de las personas y sus atributos
-			variables = fill_mat(number_people, rec, num_sick, variables); //Llenamos matriz con la cantidad de enfermos
-			MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD); //Hacemos reduce de cada variable
+			variables[0] = variables[1] = variables[2] = variables[3] = 0;
+			if (rec_var[0] != 0) {
+				MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD); //Hacemos que todos los procesos sepan
+				//la informacion de las personas y sus atributos
+				clear_mat(world_size, num_sick, variables); //Limpiar matriz de enfermos
+				fill_mat(number_people, rec, num_sick); //Llenamos matriz con la cantidad de enfermos
+			}
 			for (int i = 0; i < block1; i++) {
 				sick = 0;
 				x = world[4 * i];
 				y = world[4 * i + 1];
 				state = world[4 * i + 2];
 				if (state == 1) {
+					variables[1]++;
 					sick_time = world[4 * i + 3];
 					if (sick_time >= death_duration) {
 						prob_rec = distribution(generator); //Decidimos si la persona se enferma o se hace inmune
@@ -132,6 +142,7 @@ int main(int argc, char * argv[]) {
 					}
 				}
 				else if (state == 0) {
+					variables[0]++;
 					sick = num_sick[x][y];
 					for (int j = 0; j < sick; j++) { //Hacemos un for por cada enfermo en la misma posicion de la persona
 						prob_infect = distribution(generator);
@@ -141,13 +152,19 @@ int main(int argc, char * argv[]) {
 						}
 					}
 				}
+				else if (state == 2) {
+					variables[2]++;
+				}
+				else if (state == 3) {
+					variables[3]++;
+				}
 				pos1 = movePos(x, world_size);
 				pos2 = movePos(y, world_size);
 				world[4 * i] = pos1;
 				world[4 * i + 1] = pos2;
 			}
+			MPI_Allreduce(variables, rec_var, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD); //Hacemos reduce de cada variable
 			stable = write(actual_tic, name, number_people, world, world_size, mid, cnt_proc, rec_var); //Crear archivo y escribir en la consola
-			clear_mat(world_size, num_sick, variables); //Limpiar matriz de enfermos
 			actual_tic++;
 		} while (!stable);
 		/* Actualizaciones por tic */
@@ -196,7 +213,7 @@ int validate(int number_people, int infect, int chance, int death_duration, int 
 	return correct;
 }
 
-int* fill_mat(int number_people, int* rec, int** sick_time, int* variables) { //Llena la matriz con los enfermos y ademas lleva la cuenta de las variables de personas
+void fill_mat(int number_people, int* rec, int** sick_time) { //Llena la matriz con los enfermos y ademas lleva la cuenta de las variables de personas
 	int x, y, state;
 	for (int i = 0; i < number_people; i++) {
 		x = rec[4 * i];
@@ -204,19 +221,8 @@ int* fill_mat(int number_people, int* rec, int** sick_time, int* variables) { //
 		state = rec[4 * i + 2];
 		if (state == 1) {
 			sick_time[x][y]++;
-			variables[1]++;
-		}
-		else if (state == 0) {
-			variables[0]++;
-		}
-		else if (state == 2) {
-			variables[2]++;
-		}
-		else if (state == 3) {
-			variables[3]++;
 		}
 	}
-	return variables;
 }
 
 bool write(int actual_tic, string name, int number_people, int* world, int world_size, int mid, int cnt_proc, int* rec_var) { //Hace archivo e imprime en consola
@@ -230,17 +236,17 @@ bool write(int actual_tic, string name, int number_people, int* world, int world
 		ofstream file;
 		file.open(name, ios_base::app);
 		file << "Reporte del tic " << actual_tic << endl
-			<< " Personas muertas total " << dead_people / cnt_proc << ", promedio " << (dead_people / cnt_proc) / actual_tic << ", porcentaje " << number_people * (dead_people / cnt_proc) / 100 << endl
-			<< " Personas sanas total " << healthy_people / cnt_proc << ", promedio " << (healthy_people / cnt_proc) / actual_tic << ", porcentaje " << number_people * (healthy_people / cnt_proc) / 100 << endl
-			<< " Personas enfermas total " << sick_people / cnt_proc << ", promedio " << (sick_people / cnt_proc) / actual_tic << ", porcentaje " << number_people * (sick_people / cnt_proc) / 100 << endl
-			<< " Personas inmunes total " << inmune_people / cnt_proc << ", promedio " << (inmune_people / cnt_proc) / actual_tic << ", porcentaje " << number_people * (inmune_people / cnt_proc) / 100 << endl;
+			<< " Personas muertas total " << dead_people << ", promedio " << (dead_people) / actual_tic << ", porcentaje " << number_people * (dead_people) / 100 << endl
+			<< " Personas sanas total " << healthy_people << ", promedio " << (healthy_people) / actual_tic << ", porcentaje " << number_people * (healthy_people) / 100 << endl
+			<< " Personas enfermas total " << sick_people << ", promedio " << (sick_people) / actual_tic << ", porcentaje " << number_people * (sick_people) / 100 << endl
+			<< " Personas inmunes total " << inmune_people << ", promedio " << (inmune_people) / actual_tic << ", porcentaje " << number_people * (inmune_people) / 100 << endl;
 
 		file.close(); //Hacer archivo
 		cout << "Reporte del tic " << actual_tic << endl
-			<< " Personas muertas total " << dead_people / cnt_proc << ", promedio " << (dead_people / cnt_proc) / actual_tic << ", porcentaje " << number_people * (dead_people / cnt_proc) / 100 << endl
-			<< " Personas sanas total " << healthy_people / cnt_proc << ", promedio " << (healthy_people / cnt_proc) / actual_tic << ", porcentaje " << number_people * (healthy_people / cnt_proc) / 100 << endl
-			<< " Personas enfermas total " << sick_people / cnt_proc << ", promedio " << (sick_people / cnt_proc) / actual_tic << ", porcentaje " << number_people * (sick_people / cnt_proc) / 100 << endl
-			<< " Personas inmunes total " << inmune_people / cnt_proc << ", promedio " << (inmune_people / cnt_proc) / actual_tic << ", porcentaje " << number_people * (inmune_people / cnt_proc) / 100 << endl;
+			<< " Personas muertas total " << dead_people << ", promedio " << (dead_people) / actual_tic << ", porcentaje " << number_people * (dead_people) / 100 << endl
+			<< " Personas sanas total " << healthy_people << ", promedio " << (healthy_people) / actual_tic << ", porcentaje " << number_people * (healthy_people) / 100 << endl
+			<< " Personas enfermas total " << sick_people << ", promedio " << (sick_people) / actual_tic << ", porcentaje " << number_people * (sick_people) / 100 << endl
+			<< " Personas inmunes total " << inmune_people << ", promedio " << (inmune_people) / actual_tic << ", porcentaje " << number_people * (inmune_people) / 100 << endl;
 	}
 	if (sick_people == 0) {
 		stable = 1;
@@ -270,8 +276,6 @@ void clear_mat(int world_size, int** num_sick, int* variables) { //Limpia la mat
 			num_sick[i][j] = 0;
 		}
 	}
-	for (int i = 0; i < 4; i++) {
-		variables[i] = 0;
-	}
+
 }
 
