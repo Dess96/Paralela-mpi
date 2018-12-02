@@ -10,8 +10,8 @@ using namespace std;
 /* Funciones */
 void obt_args(char* argv[], int&, int&, int&, int&, int&, int&);
 int validate(int, int, int, int, int, int);
-void fill_mat(int, int*, int**);
-void clear_mat(int, int**, int*);
+void fill_mat(int, int*, int*, int);
+void clear_mat(int, int*, int*);
 int movePos(int, int);
 bool write(int, string, int, int*, int, int, int, int*);
 /* Funciones */
@@ -30,9 +30,9 @@ int main(int argc, char * argv[]) {
 	int* rec;
 	int* variables;
 	int* rec_var;
-	int** num_sick;
+	int* num_sick;
 	/* Parametros y variables utilizadas en la simulacion */
-	int world_size, death_duration, number_people, infected, perc, pos1, pos2, block1, sick, x, y, state, sick_time, chance, infect, correct;
+	int world_size, death_duration, number_people, infected, perc, pos1, pos2, block1, sick, x, y, state, sick_time, chance, infect, correct, index;
 	int sims = 1;
 	int actual_tic = 1;
 	/* Parametros y variables utilizadas en la simulacion */
@@ -70,10 +70,7 @@ int main(int argc, char * argv[]) {
 		name.append(number);
 		name.append(".txt");
 		/* Matriz con enfermos y arreglo con personas y sus atributos*/
-		num_sick = new int*[world_size]; //Contendra la cantidad de enfermos. Cada proceso tiene la matriz completa
-		for (int i = 0; i < world_size; i++) {
-			num_sick[i] = new int[world_size]();
-		}
+		num_sick = new int[world_size*world_size]; //Contendra la cantidad de enfermos. Cada proceso tiene la matriz completa
 		world = new int[number_people * 4 / cnt_proc]; //Tendra a las personas y sus cuatro "atributos": x, y, estado, tiempo enfermo. Cada proceso tiene una parte
 		rec = new int[number_people * 4]; //Buffer para enviar world
 		variables = new int[4](); //Tendra las variables con la cantidad de personas sanas, enfermas, inmunes y muertas
@@ -113,7 +110,7 @@ int main(int argc, char * argv[]) {
 				MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD); //Hacemos que todos los procesos sepan
 				//la informacion de las personas y sus atributos
 				clear_mat(world_size, num_sick, variables); //Limpiar matriz de enfermos
-				fill_mat(number_people, rec, num_sick); //Llenamos matriz con la cantidad de enfermos
+				fill_mat(number_people, rec, num_sick, world_size); //Llenamos matriz con la cantidad de enfermos
 			}
 			for (int i = 0; i < block1; i++) {
 				sick = 0;
@@ -138,7 +135,8 @@ int main(int argc, char * argv[]) {
 				}
 				else if (state == 0) {
 					variables[0]++;
-					sick = num_sick[x][y];
+					index = x * world_size + y;
+					sick = num_sick[index];
 					for (int j = 0; j < sick; j++) { //Hacemos un for por cada enfermo en la misma posicion de la persona
 						prob_infect = distribution(generator);
 						if (prob_infect < infectiousness) {
@@ -208,14 +206,15 @@ int validate(int number_people, int infect, int chance, int death_duration, int 
 	return correct;
 }
 
-void fill_mat(int number_people, int* rec, int** sick_time) { //Llena la matriz con los enfermos y ademas lleva la cuenta de las variables de personas
-	int x, y, state;
+void fill_mat(int number_people, int* rec, int* num_sick, int world_size) { //Llena la matriz con los enfermos y ademas lleva la cuenta de las variables de personas
+	int x, y, state, index;
 	for (int i = 0; i < number_people; i++) {
 		x = rec[4 * i];
 		y = rec[4 * i + 1];
 		state = rec[4 * i + 2];
 		if (state == 1) {
-			sick_time[x][y]++;
+			index = x * world_size + y;
+			num_sick[index]++;
 		}
 	}
 }
@@ -264,11 +263,9 @@ int movePos(int pos, int world_size) { //Genera una nueva posicion con base al p
 	return pos;
 }
 
-void clear_mat(int world_size, int** num_sick, int* variables) { //Limpia la matriz de enfermos
-	for (int i = 0; i < world_size; i++) {
-		for (int j = 0; j < world_size; j++) {
-			num_sick[i][j] = 0;
-		}
+void clear_mat(int world_size, int* num_sick, int* variables) { //Limpia la matriz de enfermos
+	for (int i = 0; i < world_size*world_size; i++) {
+		num_sick[i] = 0;
 	}
 
 }
