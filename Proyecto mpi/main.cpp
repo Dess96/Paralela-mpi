@@ -82,9 +82,6 @@ int main(int argc, char * argv[]) {
 		/* Inicializacion */
 		perc = number_people * infected / 100; //Cantidad correspondiente al porcentaje dado
 		block1 = number_people / cnt_proc; //Bloque que le tocara a cada proceso
-
-		MPI_Barrier(MPI_COMM_WORLD);
-		local_start = MPI_Wtime();
 		for (int i = 0; i < block1; i++) { //Cambiamos a los infectados
 			if (i < perc) {
 				pos1 = rd() % world_size;
@@ -105,6 +102,8 @@ int main(int argc, char * argv[]) {
 		}
 		/* Inicializacion */
 
+		MPI_Barrier(MPI_COMM_WORLD);
+		local_start = MPI_Wtime();
 		/* Actualizaciones por tic */
 		do {
 			MPI_Allgather(world, number_people * 4 / cnt_proc, MPI_INT, rec, number_people * 4 / cnt_proc, MPI_INT, MPI_COMM_WORLD); //Hacemos que todos los procesos sepan
@@ -150,7 +149,7 @@ int main(int argc, char * argv[]) {
 		local_finish = MPI_Wtime();
 		local_elapsed = local_finish - local_start;
 		MPI_Reduce(&local_elapsed, &elapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-		if (mid == 0){
+		if (mid == 0) {
 			cout << "Tiempo transcurrido en total = " << elapsed << endl;
 			cout << "Tiempo transcurrido por tic = " << elapsed / actual_tic << endl;
 			cout << "La simulacion ha terminado." << endl;
@@ -223,7 +222,7 @@ bool write(int actual_tic, string name, int number_people, int* world, int world
 	int inmune_people = rec_var[2];
 	int dead_people = rec_var[3];
 	bool stable = 0;
-	if (mid == 0) { 
+	if (mid == 0) {
 		ofstream file;
 		file.open(name, ios_base::app);
 		file << "Reporte del tic " << actual_tic << endl
@@ -280,4 +279,3 @@ void clear_mat(int world_size, int** num_sick) { //Limpia la matriz de enfermos
 		}
 	}
 }
-
