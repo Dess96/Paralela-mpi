@@ -1,0 +1,2 @@
+*Si la cantidad de personas no es divisible entre la cantidad de procesos, el programa no funcionará. No generará los print ni el 
+archivo.
