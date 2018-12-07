@@ -85,8 +85,13 @@ int main(int argc, char * argv[]) {
 	if (mid == 0) {
 		cin.ignore();
 	}
+	delete[] rec; //Liberar memoria de buffers y estructuras de datos
+	delete[] variables;
+	delete[] rec_var;
+	delete[] world;
 	MPI_Barrier(MPI_COMM_WORLD); // para sincronizar la finalización de los procesos
 	MPI_Finalize();
+
 	return 0;
 }
 
